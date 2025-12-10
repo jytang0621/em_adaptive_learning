@@ -170,6 +170,7 @@ filter_df = asyncio.run(filter_judge_evidence(merged_df, max_concurrent=10))
 #### 3.2 转换为训练数据
 
 将合并后的数据转换为 EM 算法所需的训练格式：
+补充说明：code_evidence是测试用例级别的判断，构建步骤级别的标注数据时，将code_evidence的结果复制到step-level/action-level，gui evidence是步骤级别的判断，仅针对click动作；reflection是测试用例级别的判断，标注在Tell动作上
 
 ```python
 from src.em_data_process import convert_to_train_data
@@ -193,7 +194,42 @@ train_df.to_excel("train_em_df.xlsx", index=False)
 - `is_reflection`: 是否为反思步骤（1=是，0=否）
 - `agent_testcase_score`: Agent 测试用例分数
 
-补充说明：生成标准训练数据格式后，进行初步的环境失败和agent失败的数据标注，主要标注`delta_label`字段。少量标注后，训练效果将极具提升
+### 数据标注说明
+
+生成标准训练数据格式后，建议进行**根因标注**，主要标注 `delta_label` 字段。这是 EM 算法实现半监督学习的关键。
+
+**`delta_label` 字段说明**：
+- **字段位置**: 在训练数据 DataFrame 中添加 `delta_label` 列
+- **标注值**:
+  - `0` = **EnvFail**（环境失败）：失败由环境因素导致，如 GUI 点击位置错误、代码实现问题、系统异常等
+  - `1` = **AgentFail**（Agent 失败）：失败由 Agent 自身问题导致，如 Agent 判断错误、无响应、逻辑错误等
+  - `NaN` = 未标注（算法会自动推断）
+
+**标注建议**：
+1. **标注粒度**: 按 `test_case_id`（用例级别）进行标注，同一用例的所有步骤共享相同的 `delta_label`
+2. **标注策略**: 
+   - 优先标注**典型失败案例**，特别是容易混淆的边界情况
+   - 建议标注至少 **10-20%** 的数据，即使少量标注也能显著提升训练效果
+   - 标注时重点关注：
+     - GUI 证据（E1_gui）和代码证据（E2_code）都正常但最终失败的案例 → 可能是 AgentFail
+     - GUI 或代码证据明显异常的案例 → 可能是 EnvFail
+     - Agent 无响应（E4_noresp=1）的案例 → 通常是 AgentFail
+3. **标注示例**：
+```python
+# 在训练数据中添加 delta_label 列
+train_df["delta_label"] = np.nan
+
+# 标注示例：某个用例是环境失败
+train_df.loc[train_df["test_case_id"] == "case_001", "delta_label"] = 0  # EnvFail
+
+# 标注示例：某个用例是 Agent 失败
+train_df.loc[train_df["test_case_id"] == "case_002", "delta_label"] = 1  # AgentFail
+```
+
+**半监督学习机制**：
+- 有 `delta_label` 标注的用例作为**硬锚点**（hard anchor），在 EM 算法的 E-Step 中固定其根因类型
+- 未标注的用例由算法根据证据自动推断根因类型
+- 少量高质量标注即可引导算法学习到正确的根因模式，显著提升整体预测准确率
 
 ## EM 流程说明
 

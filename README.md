@@ -170,7 +170,6 @@ filter_df = asyncio.run(filter_judge_evidence(merged_df, max_concurrent=10))
 #### 3.2 转换为训练数据
 
 将合并后的数据转换为 EM 算法所需的训练格式：
-补充说明：code_evidence是测试用例级别的判断，构建步骤级别的标注数据时，将code_evidence的结果复制到step-level/action-level，gui evidence是步骤级别的判断，仅针对click动作；reflection是测试用例级别的判断，标注在Tell动作上
 
 ```python
 from src.em_data_process import convert_to_train_data
@@ -178,6 +177,49 @@ from src.em_data_process import convert_to_train_data
 train_df = convert_to_train_data(merged_df, label_col="gt_x")
 train_df.to_excel("train_em_df.xlsx", index=False)
 ```
+
+**证据粒度级别说明**：
+
+不同证据具有不同的粒度级别，在构建步骤级别（step-level/action-level）的训练数据时需要特别注意：
+
+| 证据类型 | 原始粒度 | 数据构建方式 | 适用动作类型 | 说明 |
+|---------|---------|------------|------------|------|
+| **E2_code** (代码证据) | 测试用例级别 | 将用例级别的 `code_evidence` 值**复制**到该用例的所有步骤 | 所有动作 | 代码审查是对整个测试用例的判断，因此同一用例的所有步骤共享相同的代码证据值 |
+| **E1_gui** (GUI 证据) | 步骤级别 | 直接使用步骤级别的 `gui_evidence` 值 | **仅 Click 动作** | GUI 点击准确性是针对每个点击动作的独立判断，非点击动作（如 Scroll、Type 等）的 `gui_evidence` 为 -1（不适用） |
+| **E3_reflect** (反思证据) | 测试用例级别 | 将用例级别的反思结果标注在 **Tell 动作**上 | **仅 Tell 动作** | Agent 的反思判断是针对整个测试用例的，通常通过 `Tell()` 动作输出，因此只在该动作上标注 |
+| **E4_noresp** (无响应证据) | 步骤级别 | 通过 LLM 分析 Tell 动作中的证据生成 | **仅 Tell 动作** | 从 Tell 动作的 evidence 中提取并判断是否存在无响应或异常情况 |
+
+**数据构建流程**：
+
+1. **代码证据（E2_code）**：
+   ```python
+   # code_evidence 是 test_case_id 级别的
+   # 合并时通过 test_case_id 关联，每个步骤自动继承该用例的代码证据值
+   merged_df = pd.merge(code_evidence, gui_evidence, on="test_case_id", how="left")
+   # 结果：同一 test_case_id 的所有步骤都有相同的 code_evidence_x 值
+   ```
+
+2. **GUI 证据（E1_gui）**：
+   ```python
+   # gui_evidence 已经是 action_id 级别的
+   # 每个 Click 动作都有独立的 gui_evidence 值
+   # 非 Click 动作的 gui_evidence = -1（表示不适用）
+   ```
+
+3. **反思证据（E3_reflect）**：
+   ```python
+   # 通过 filter_judge_evidence 处理 Tell 动作
+   # 只对包含 'Tell (' 的 action_content 进行处理
+   filter_df = asyncio.run(filter_judge_evidence(merged_df))
+   # 结果：只有 Tell 动作会有 agent_noresp 和 agent_judge 值
+   ```
+
+**掩码（Mask）机制**：
+
+- `M_gui=1`：当 `gui_evidence=-1` 时（非 Click 动作），掩码 GUI 证据
+- `M_code=0`：代码证据始终有效（因为已复制到步骤级别）
+- `M_reflect=1`：反思证据始终有效（但只在 Tell 动作上有值）
+- `M_noresp=1`：当没有 Tell 动作或无法提取证据时，掩码无响应证据
 
 输出字段说明：
 - `test_case_id`: 测试用例 ID

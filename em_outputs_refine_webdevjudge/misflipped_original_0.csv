@@ -1,0 +1,2 @@
+case_id,human_gt,agent_original,P_case_EnvFail,P_case_AgentFail,corrected_label,action,is_correct_before,is_correct_after,is_flipped
+Manufacturer Website12,0,0.0,0.3526719238793795,0.6473280761206206,1,flip_to_AgentFail,True,False,True

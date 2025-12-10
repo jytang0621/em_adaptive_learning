@@ -1,0 +1,19 @@
+case_id,human_gt,agent_original,P_case_EnvFail,P_case_AgentFail,corrected_label,action,is_correct_before,is_correct_after,is_flipped
+Booking Calendar12,0,0.0,0.916208967484837,0.08379103251516296,0,keep_EnvFail_or_AgentFail,True,True,False
+CSS Animation Playground07,0,0.0,0.8224417114186491,0.17755828858135086,0,keep_EnvFail_or_AgentFail,True,True,False
+Knowledge Hub08,0,0.0,0.9998932521158487,0.00010674788415125807,0,keep_EnvFail_or_AgentFail,True,True,False
+Manufacturer Website12,0,0.0,0.3526719238793795,0.6473280761206206,1,flip_to_AgentFail,True,False,True
+Medical Symptom Severity Analyzer06,0,0.0,0.8775578721867333,0.12244212781326677,0,keep_EnvFail_or_AgentFail,True,True,False
+Medical Symptom Severity Analyzer08,0,0.0,0.8985039704278315,0.10149602957216848,0,keep_EnvFail_or_AgentFail,True,True,False
+Photo Quote Creator04,0,0.0,0.9997912209373312,0.00020877906266892848,0,keep_EnvFail_or_AgentFail,True,True,False
+Photo Quote Creator05,0,0.0,0.9999547776445218,4.522235547817941e-05,0,keep_EnvFail_or_AgentFail,True,True,False
+Photo Quote Creator06,0,0.0,0.9999881798302492,1.1820169750790065e-05,0,keep_EnvFail_or_AgentFail,True,True,False
+Photo Quote Creator07,0,0.0,0.9998932521158487,0.00010674788415125807,0,keep_EnvFail_or_AgentFail,True,True,False
+Photo Quote Creator15,0,0.0,0.9990366948779286,0.0009633051220714102,0,keep_EnvFail_or_AgentFail,True,True,False
+Photo Quote Creator16,0,0.0,0.9999547776445218,4.522235547817941e-05,0,keep_EnvFail_or_AgentFail,True,True,False
+ShapeMaster13,0,0.0,0.9998445252829931,0.00015547471700697705,0,keep_EnvFail_or_AgentFail,True,True,False
+ShapeMaster16,0,0.0,0.9999454229636833,5.45770363167191e-05,0,keep_EnvFail_or_AgentFail,True,True,False
+Simple Image Resizer14,0,0.0,0.9999881798302492,1.1820169750790024e-05,0,keep_EnvFail_or_AgentFail,True,True,False
+Simple Image Resizer15,0,0.0,0.9999949928125035,5.007187496434889e-06,0,keep_EnvFail_or_AgentFail,True,True,False
+Story Display04,0,0.0,0.8985039704278315,0.10149602957216848,0,keep_EnvFail_or_AgentFail,True,True,False
+Story Display05,0,0.0,0.7108174656618638,0.2891825343381363,0,keep_EnvFail_or_AgentFail,True,True,False

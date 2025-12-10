@@ -1,0 +1,127 @@
+case_id,human_gt,agent_original,P_case_EnvFail,P_case_AgentFail,corrected_label,action,is_correct_before,is_correct_after,is_flipped
+90s Retro Business Card03,1,1.0,6.327432376628573e-05,0.9999367256762337,1,keep_AgentJudge,True,True,False
+90s Retro Business Card16,1,1.0,0.0045531143157043945,0.9954468856842956,1,keep_AgentJudge,True,True,False
+Booking Calendar04,1,1.0,0.0019338241589629038,0.9980661758410371,1,keep_AgentJudge,True,True,False
+Booking Calendar09,1,1.0,0.0045531143157043945,0.9954468856842956,1,keep_AgentJudge,True,True,False
+Booking Calendar14,1,1.0,7.815326011331706e-05,0.9999218467398866,1,keep_AgentJudge,True,True,False
+CSS Animation Playground13,1,1.0,0.07912524604277728,0.9208747539572227,1,keep_AgentJudge,True,True,False
+Code Complexity Analyzer04,1,1.0,0.0019338241589629038,0.9980661758410371,1,keep_AgentJudge,True,True,False
+Code Complexity Analyzer12,1,1.0,0.0006640645260965109,0.9993359354739034,1,keep_AgentJudge,True,True,False
+Digital Art Gallery01,1,1.0,0.0045531143157043945,0.9954468856842956,1,keep_AgentJudge,True,True,False
+Digital Art Gallery04,1,1.0,0.0019338241589629038,0.9980661758410371,1,keep_AgentJudge,True,True,False
+Digital Art Gallery13,1,1.0,0.0019338241589629038,0.9980661758410371,1,keep_AgentJudge,True,True,False
+Digital Art Gallery15,1,1.0,0.0006640645260965109,0.9993359354739034,1,keep_AgentJudge,True,True,False
+Digital Name Card07,1,1.0,0.005617846034598065,0.9943821539654019,1,keep_AgentJudge,True,True,False
+Digital Name Card08,1,1.0,0.0036894289519696414,0.9963105710480304,1,keep_AgentJudge,True,True,False
+Digital Name Card12,1,1.0,0.0019338241589629038,0.9980661758410371,1,keep_AgentJudge,True,True,False
+Digital Name Card13,1,1.0,0.07912524604277728,0.9208747539572227,1,keep_AgentJudge,True,True,False
+Digital Name Card14,1,1.0,0.053317149026630296,0.9466828509733697,1,keep_AgentJudge,True,True,False
+DigitalBusinessCard Page11,1,1.0,0.00012051743564625308,0.9998794825643538,1,keep_AgentJudge,True,True,False
+DigitalBusinessCard Page12,1,1.0,0.04360858824999608,0.956391411750004,1,keep_AgentJudge,True,True,False
+Event Landing Page03,1,1.0,0.005617846034598065,0.9943821539654019,1,keep_AgentJudge,True,True,False
+Event Landing Page05,1,1.0,0.0045531143157043945,0.9954468856842956,1,keep_AgentJudge,True,True,False
+Event Landing Page11,1,1.0,0.0036894289519696414,0.9963105710480304,1,keep_AgentJudge,True,True,False
+ExpensePlanner11,1,1.0,2.4470935362749855e-06,0.9999975529064637,1,keep_AgentJudge,True,True,False
+ExpensePlanner13,1,1.0,0.00228908362321102,0.997710916376789,1,keep_AgentJudge,True,True,False
+ExpensePlanner15,1,1.0,0.00017453423695611226,0.999825465763044,1,keep_AgentJudge,True,True,False
+Festival Planner05,1,1.0,2.6804674225899052e-05,0.9999731953257741,1,keep_AgentJudge,True,True,False
+Festival Planner06,1,1.0,0.00022784575716297228,0.999772154242837,1,keep_AgentJudge,True,True,False
+Festival Planner08,1,1.0,0.00022784575716297228,0.999772154242837,1,keep_AgentJudge,True,True,False
+Festival Planner10,1,1.0,0.0019338241589629038,0.9980661758410371,1,keep_AgentJudge,True,True,False
+Film effect image processing website01,1,1.0,0.07912524604277728,0.9208747539572227,1,keep_AgentJudge,True,True,False
+Film effect image processing website12,1,1.0,0.07912524604277728,0.9208747539572227,1,keep_AgentJudge,True,True,False
+Film effect image processing website13,1,1.0,2.552567777138456e-06,0.9999974474322227,1,keep_AgentJudge,True,True,False
+Film effect image processing website14,1,1.0,1.9134201346606094e-07,0.9999998086579867,1,keep_AgentJudge,True,True,False
+Interactive Color Palette Generator06,1,1.0,0.0019338241589629038,0.9980661758410371,1,keep_AgentJudge,True,True,False
+Interactive Color Palette Generator09,1,1.0,0.005617846034598065,0.9943821539654019,1,keep_AgentJudge,True,True,False
+Interactive Color Palette Generator11,1,1.0,0.005617846034598065,0.9943821539654019,1,keep_AgentJudge,True,True,False
+KnowledgeSource01,1,1.0,0.0015662131423493184,0.9984337868576506,1,keep_AgentJudge,True,True,False
+KnowledgeSource04,1,1.0,0.0015662131423493184,0.9984337868576506,1,keep_AgentJudge,True,True,False
+KnowledgeSource05,1,1.0,0.0005376988963561662,0.9994623011036439,1,keep_AgentJudge,True,True,False
+KnowledgeSource13,1,1.0,0.00031944767650647193,0.9996805523234934,1,keep_AgentJudge,True,True,False
+LUXURY photography portfolio02,1,1.0,0.00022784575716297228,0.999772154242837,1,keep_AgentJudge,True,True,False
+LUXURY photography portfolio06,1,1.0,0.0004353690568757028,0.9995646309431243,1,keep_AgentJudge,True,True,False
+LUXURY photography portfolio08,1,1.0,0.002989085082026872,0.9970109149179732,1,keep_AgentJudge,True,True,False
+LUXURY photography portfolio09,1,1.0,6.327432376628573e-05,0.9999367256762337,1,keep_AgentJudge,True,True,False
+LUXURY photography portfolio12,1,1.0,0.0019338241589629038,0.9980661758410371,1,keep_AgentJudge,True,True,False
+LUXURY photography portfolio13,1,1.0,2.6804674225899052e-05,0.9999731953257741,1,keep_AgentJudge,True,True,False
+Language Spelling Bee01,1,1.0,0.005617846034598065,0.9943821539654019,1,keep_AgentJudge,True,True,False
+Language Spelling Bee02,1,1.0,0.00664538452147015,0.9933546154785299,1,keep_AgentJudge,True,True,False
+Language Spelling Bee05,1,1.0,0.00228908362321102,0.997710916376789,1,keep_AgentJudge,True,True,False
+Language Spelling Bee07,1,1.0,7.815326011331706e-05,0.9999218467398866,1,keep_AgentJudge,True,True,False
+Language Spelling Bee08,1,1.0,0.0019338241589629038,0.9980661758410371,1,keep_AgentJudge,True,True,False
+Language Spelling Bee09,1,1.0,0.00022784575716297228,0.999772154242837,1,keep_AgentJudge,True,True,False
+Language Spelling Bee10,1,1.0,0.00022784575716297228,0.999772154242837,1,keep_AgentJudge,True,True,False
+Language Spelling Bee14,1,1.0,0.00664538452147015,0.9933546154785299,1,keep_AgentJudge,True,True,False
+Language Spelling Bee15,1,1.0,0.0012683944688922479,0.9987316055311076,1,keep_AgentJudge,True,True,False
+Manufacturer Website04,1,1.0,6.327432376628573e-05,0.9999367256762337,1,keep_AgentJudge,True,True,False
+Manufacturer Website06,1,1.0,0.0045531143157043945,0.9954468856842956,1,keep_AgentJudge,True,True,False
+Manufacturer Website08,1,1.0,0.02862481215102326,0.9713751878489767,1,keep_AgentJudge,True,True,False
+Manufacturer Website11,1,1.0,0.0019338241589629038,0.9980661758410371,1,keep_AgentJudge,True,True,False
+Markdown Note Editor with Local Storage04,1,1.0,0.005617846034598065,0.9943821539654019,1,keep_AgentJudge,True,True,False
+Markdown Note Editor with Local Storage08,1,1.0,0.0006640645260965109,0.9993359354739034,1,keep_AgentJudge,True,True,False
+Markdown Note Editor with Local Storage09,1,1.0,0.00014935609215527312,0.9998506439078447,1,keep_AgentJudge,True,True,False
+Medical Symptom Severity Analyzer02,1,1.0,0.00022784575716297228,0.999772154242837,1,keep_AgentJudge,True,True,False
+Medical Symptom Severity Analyzer04,1,1.0,2.6804674225899052e-05,0.9999731953257741,1,keep_AgentJudge,True,True,False
+Medical Symptom Severity Analyzer14,1,1.0,0.003206716881349261,0.9967932831186508,1,keep_AgentJudge,True,True,False
+Mini Shop Display01,1,1.0,0.005386961858514037,0.9946130381414859,1,keep_AgentJudge,True,True,False
+Mini Shop Display05,1,1.0,0.005617846034598065,0.9943821539654019,1,keep_AgentJudge,True,True,False
+Mini Shop Display07,1,1.0,0.005617846034598065,0.9943821539654019,1,keep_AgentJudge,True,True,False
+Mini Shop Display11,1,1.0,0.0036894289519696414,0.9963105710480304,1,keep_AgentJudge,True,True,False
+MoodMaker06,1,1.0,0.0019338241589629038,0.9980661758410371,1,keep_AgentJudge,True,True,False
+MoodMaker10,1,1.0,0.0019338241589629038,0.9980661758410371,1,keep_AgentJudge,True,True,False
+MoodMaker12,1,1.0,0.00022784575716297228,0.999772154242837,1,keep_AgentJudge,True,True,False
+Music Collection01,1,1.0,0.0015662131423493184,0.9984337868576506,1,keep_AgentJudge,True,True,False
+Music Collection03,1,1.0,0.0015662131423493184,0.9984337868576506,1,keep_AgentJudge,True,True,False
+Music Collection13,1,1.0,0.0015662131423493184,0.9984337868576506,1,keep_AgentJudge,True,True,False
+OfficeEmployeeTaskAllocator01,1,1.0,0.005617846034598065,0.9943821539654019,1,keep_AgentJudge,True,True,False
+OfficeEmployeeTaskAllocator02,1,1.0,0.0019338241589629038,0.9980661758410371,1,keep_AgentJudge,True,True,False
+OfficeEmployeeTaskAllocator12,1,1.0,0.00012051743564625308,0.9998794825643538,1,keep_AgentJudge,True,True,False
+OfficeEmployeeTaskAllocator13,1,1.0,0.9597401413261911,0.04025985867380887,0,flip_to_EnvFail,True,False,True
+Password Generator Tool10,1,1.0,0.0019338241589629038,0.9980661758410371,1,keep_AgentJudge,True,True,False
+Photo Quote Creator01,1,1.0,0.0005376988963561662,0.9994623011036439,1,keep_AgentJudge,True,True,False
+Photography Portfolio02,1,1.0,9.757393025533452e-05,0.9999024260697448,1,keep_AgentJudge,True,True,False
+Photography Portfolio08,1,1.0,0.002709430013052641,0.9972905699869474,1,keep_AgentJudge,True,True,False
+Photography Portfolio11,1,1.0,0.0019338241589629038,0.9980661758410371,1,keep_AgentJudge,True,True,False
+Photography Portfolio12,1,1.0,0.0024213605176725437,0.9975786394823274,1,keep_AgentJudge,True,True,False
+Product Showcase01,1,1.0,0.0045531143157043945,0.9954468856842956,1,keep_AgentJudge,True,True,False
+Product Showcase04,1,1.0,0.00664538452147015,0.9933546154785299,1,keep_AgentJudge,True,True,False
+Professional Portfolio01,1,1.0,0.002989085082026872,0.9970109149179732,1,keep_AgentJudge,True,True,False
+Professional Portfolio02,1,1.0,4.147485557714302e-05,0.9999585251444228,1,keep_AgentJudge,True,True,False
+Professional Portfolio05,1,1.0,0.005617846034598065,0.9943821539654019,1,keep_AgentJudge,True,True,False
+Professional Portfolio08,1,1.0,0.0036894289519696414,0.9963105710480304,1,keep_AgentJudge,True,True,False
+Professional Portfolio12,1,1.0,0.0036894289519696414,0.9963105710480304,1,keep_AgentJudge,True,True,False
+Professional Portfolio13,1,1.0,0.0005376988963561662,0.9994623011036439,1,keep_AgentJudge,True,True,False
+Progress Tracker03,1,1.0,0.0036894289519696414,0.9963105710480304,1,keep_AgentJudge,True,True,False
+Progress Tracker05,1,1.0,0.005617846034598065,0.9943821539654019,1,keep_AgentJudge,True,True,False
+Research Paper Gallery03,1,1.0,0.0045531143157043945,0.9954468856842956,1,keep_AgentJudge,True,True,False
+Research Paper Gallery05,1,1.0,0.00022784575716297228,0.999772154242837,1,keep_AgentJudge,True,True,False
+ShapeMaster01,1,1.0,0.005617846034598065,0.9943821539654019,1,keep_AgentJudge,True,True,False
+ShapeMaster02,1,1.0,7.815326011331706e-05,0.9999218467398866,1,keep_AgentJudge,True,True,False
+ShapeMaster05,1,1.0,0.0015662131423493184,0.9984337868576506,1,keep_AgentJudge,True,True,False
+ShapeMaster10,1,1.0,4.147485557714302e-05,0.9999585251444228,1,keep_AgentJudge,True,True,False
+Simple Image Resizer01,1,1.0,0.0045531143157043945,0.9954468856842956,1,keep_AgentJudge,True,True,False
+Simple MBTI Test01,1,1.0,0.0019338241589629038,0.9980661758410371,1,keep_AgentJudge,True,True,False
+Simple MBTI Test06,1,1.0,9.819294780860353e-13,0.9999999999990181,1,keep_AgentJudge,True,True,False
+Simple MBTI Test08,1,1.0,9.819294780860353e-13,0.9999999999990181,1,keep_AgentJudge,True,True,False
+Simple MBTI Test12,1,1.0,9.819294780860353e-13,0.9999999999990181,1,keep_AgentJudge,True,True,False
+Simple MBTI Test14,1,1.0,2.7264364657663385e-13,0.9999999999997273,1,keep_AgentJudge,True,True,False
+Social Link Tree01,1,1.0,0.005617846034598065,0.9943821539654019,1,keep_AgentJudge,True,True,False
+Social Link Tree02,1,1.0,0.005617846034598065,0.9943821539654019,1,keep_AgentJudge,True,True,False
+Social Link Tree06,1,1.0,0.005617846034598065,0.9943821539654019,1,keep_AgentJudge,True,True,False
+Social Link Tree09,1,1.0,0.00022784575716297228,0.999772154242837,1,keep_AgentJudge,True,True,False
+Story Display12,1,1.0,0.0019338241589629038,0.9980661758410371,1,keep_AgentJudge,True,True,False
+Tech Blog Platform02,1,1.0,0.0036894289519696414,0.9963105710480304,1,keep_AgentJudge,True,True,False
+Tech Blog Platform13,1,1.0,0.07912524604277728,0.9208747539572227,1,keep_AgentJudge,True,True,False
+Tech Blog Platform15,1,1.0,0.0650401338814036,0.9349598661185965,1,keep_AgentJudge,True,True,False
+VideoClipper12,1,1.0,2.1701347475038622e-05,0.9999782986525251,1,keep_AgentJudge,True,True,False
+VideoClipper13,1,1.0,0.0001844733935586526,0.9998155266064414,1,keep_AgentJudge,True,True,False
+white blog desgin01,1,1.0,0.005617846034598065,0.9943821539654019,1,keep_AgentJudge,True,True,False
+white blog desgin04,1,1.0,0.0045531143157043945,0.9954468856842956,1,keep_AgentJudge,True,True,False
+white blog desgin05,1,1.0,0.005617846034598065,0.9943821539654019,1,keep_AgentJudge,True,True,False
+white blog desgin06,1,1.0,0.005617846034598065,0.9943821539654019,1,keep_AgentJudge,True,True,False
+white blog desgin07,1,1.0,0.005617846034598065,0.9943821539654019,1,keep_AgentJudge,True,True,False
+white blog desgin08,1,1.0,0.005617846034598065,0.9943821539654019,1,keep_AgentJudge,True,True,False
+white blog desgin10,1,1.0,0.0045531143157043945,0.9954468856842956,1,keep_AgentJudge,True,True,False
+white blog desgin11,1,1.0,0.005617846034598065,0.9943821539654019,1,keep_AgentJudge,True,True,False
+white blog desgin15,1,1.0,0.0045531143157043945,0.9954468856842956,1,keep_AgentJudge,True,True,False

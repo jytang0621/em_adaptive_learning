@@ -1,0 +1,730 @@
+test_case_id,step,P_EnvFail,P_AgentFail
+90s Retro Business Card03,90s Retro Business Card03_iter_1,0.0055584004657100545,0.9944415985398484
+90s Retro Business Card03,90s Retro Business Card03_iter_2,0.013022981050089245,0.9869770179629337
+90s Retro Business Card03,90s Retro Business Card03_iter_3,0.0055584004657100545,0.9944415985398484
+90s Retro Business Card03,90s Retro Business Card03_iter_4,0.0055584004657100545,0.9944415985398484
+90s Retro Business Card03,90s Retro Business Card03_iter_5,0.0055584004657100545,0.9944415985398484
+90s Retro Business Card03,90s Retro Business Card03_iter_6,0.011107585199148715,0.9888924138119588
+90s Retro Business Card07,90s Retro Business Card07_iter_1,0.5812573350008902,0.4187426644178525
+90s Retro Business Card07,90s Retro Business Card07_iter_2,0.5812573350008902,0.4187426644178525
+90s Retro Business Card07,90s Retro Business Card07_iter_3,0.5812573350008902,0.4187426644178525
+90s Retro Business Card07,90s Retro Business Card07_iter_4,0.863234080399708,0.13676591873705782
+90s Retro Business Card16,90s Retro Business Card16_iter_1,0.013022981050089245,0.9869770179629337
+90s Retro Business Card16,90s Retro Business Card16_iter_2,0.011107585199148715,0.9888924138119588
+Booking Calendar04,Booking Calendar04_iter_1,0.0055584004657100545,0.9944415985398484
+Booking Calendar04,Booking Calendar04_iter_2,0.011107585199148715,0.9888924138119588
+Booking Calendar09,Booking Calendar09_iter_1,0.013022981050089245,0.9869770179629337
+Booking Calendar09,Booking Calendar09_iter_2,0.011107585199148715,0.9888924138119588
+Booking Calendar12,Booking Calendar12_iter_1,0.7661820197013501,0.23381797953246775
+Booking Calendar12,Booking Calendar12_iter_2,0.5812573350008902,0.4187426644178525
+Booking Calendar12,Booking Calendar12_iter_3,0.863234080399708,0.13676591873705782
+Booking Calendar14,Booking Calendar14_iter_1,0.0055584004657100545,0.9944415985398484
+Booking Calendar14,Booking Calendar14_iter_2,0.0055584004657100545,0.9944415985398484
+Booking Calendar14,Booking Calendar14_iter_3,0.0055584004657100545,0.9944415985398484
+Booking Calendar14,Booking Calendar14_iter_4,0.0055584004657100545,0.9944415985398484
+Booking Calendar14,Booking Calendar14_iter_5,0.011107585199148715,0.9888924138119588
+CSS Animation Playground07,CSS Animation Playground07_iter_1,0.5812573350008902,0.4187426644178525
+CSS Animation Playground07,CSS Animation Playground07_iter_2,0.5812573350008902,0.4187426644178525
+CSS Animation Playground07,CSS Animation Playground07_iter_3,0.863234080399708,0.13676591873705782
+CSS Animation Playground11,CSS Animation Playground11_iter_1,0.5812573350008902,0.4187426644178525
+CSS Animation Playground11,CSS Animation Playground11_iter_2,0.736110673735879,0.26388932552801037
+CSS Animation Playground11,CSS Animation Playground11_iter_3,0.863234080399708,0.13676591873705782
+CSS Animation Playground11,CSS Animation Playground11_iter_4,0.863234080399708,0.13676591873705782
+CSS Animation Playground13,CSS Animation Playground13_iter_1,0.02478563756536484,0.9752143614594208
+Code Complexity Analyzer02,Code Complexity Analyzer02_iter_1,0.5812573350008902,0.4187426644178525
+Code Complexity Analyzer02,Code Complexity Analyzer02_iter_2,0.5812573350008902,0.4187426644178525
+Code Complexity Analyzer02,Code Complexity Analyzer02_iter_3,0.863234080399708,0.13676591873705782
+Code Complexity Analyzer04,Code Complexity Analyzer04_iter_1,0.0055584004657100545,0.9944415985398484
+Code Complexity Analyzer04,Code Complexity Analyzer04_iter_2,0.011107585199148715,0.9888924138119588
+Code Complexity Analyzer07,Code Complexity Analyzer07_iter_1,0.5812573350008902,0.4187426644178525
+Code Complexity Analyzer07,Code Complexity Analyzer07_iter_2,0.5812573350008902,0.4187426644178525
+Code Complexity Analyzer07,Code Complexity Analyzer07_iter_3,0.5812573350008902,0.4187426644178525
+Code Complexity Analyzer07,Code Complexity Analyzer07_iter_4,0.5812573350008902,0.4187426644178525
+Code Complexity Analyzer07,Code Complexity Analyzer07_iter_5,0.863234080399708,0.13676591873705782
+Code Complexity Analyzer12,Code Complexity Analyzer12_iter_1,0.0055584004657100545,0.9944415985398484
+Code Complexity Analyzer12,Code Complexity Analyzer12_iter_2,0.0055584004657100545,0.9944415985398484
+Code Complexity Analyzer12,Code Complexity Analyzer12_iter_3,0.011107585199148715,0.9888924138119588
+Code Complexity Analyzer14,Code Complexity Analyzer14_iter_1,0.863234080399708,0.13676591873705782
+Code Complexity Analyzer14,Code Complexity Analyzer14_iter_2,0.8273686486350941,0.1726313505375372
+Code Complexity Analyzer14,Code Complexity Analyzer14_iter_3,0.863234080399708,0.13676591873705782
+Digital Art Gallery01,Digital Art Gallery01_iter_1,0.013022981050089245,0.9869770179629337
+Digital Art Gallery01,Digital Art Gallery01_iter_2,0.011107585199148715,0.9888924138119588
+Digital Art Gallery04,Digital Art Gallery04_iter_1,0.0055584004657100545,0.9944415985398484
+Digital Art Gallery04,Digital Art Gallery04_iter_2,0.011107585199148715,0.9888924138119588
+Digital Art Gallery12,Digital Art Gallery12_iter_1,0.5812573350008902,0.4187426644178525
+Digital Art Gallery12,Digital Art Gallery12_iter_2,0.5812573350008902,0.4187426644178525
+Digital Art Gallery12,Digital Art Gallery12_iter_3,0.8273686486350941,0.1726313505375372
+Digital Art Gallery12,Digital Art Gallery12_iter_4,0.863234080399708,0.13676591873705782
+Digital Art Gallery13,Digital Art Gallery13_iter_1,0.0055584004657100545,0.9944415985398484
+Digital Art Gallery13,Digital Art Gallery13_iter_2,0.011107585199148715,0.9888924138119588
+Digital Art Gallery15,Digital Art Gallery15_iter_1,0.0055584004657100545,0.9944415985398484
+Digital Art Gallery15,Digital Art Gallery15_iter_2,0.0055584004657100545,0.9944415985398484
+Digital Art Gallery15,Digital Art Gallery15_iter_3,0.011107585199148715,0.9888924138119588
+Digital Name Card04,Digital Name Card04_iter_1,0.5812573350008902,0.4187426644178525
+Digital Name Card04,Digital Name Card04_iter_2,0.863234080399708,0.13676591873705782
+Digital Name Card07,Digital Name Card07_iter_1,0.011107585199148715,0.9888924138119588
+Digital Name Card08,Digital Name Card08_iter_1,0.013022981050089245,0.9869770179629337
+Digital Name Card08,Digital Name Card08_iter_2,0.013022981050089245,0.9869770179629337
+Digital Name Card08,Digital Name Card08_iter_3,0.011107585199148715,0.9888924138119588
+Digital Name Card09,Digital Name Card09_iter_1,0.7661820197013501,0.23381797953246775
+Digital Name Card09,Digital Name Card09_iter_2,0.863234080399708,0.13676591873705782
+Digital Name Card12,Digital Name Card12_iter_1,0.0055584004657100545,0.9944415985398484
+Digital Name Card12,Digital Name Card12_iter_2,0.011107585199148715,0.9888924138119588
+Digital Name Card13,Digital Name Card13_iter_1,0.02478563756536484,0.9752143614594208
+Digital Name Card14,Digital Name Card14_iter_1,0.013022981050089245,0.9869770179629337
+Digital Name Card14,Digital Name Card14_iter_2,0.013022981050089245,0.9869770179629337
+Digital Name Card14,Digital Name Card14_iter_3,0.02478563756536484,0.9752143614594208
+DigitalBusinessCard Page10,DigitalBusinessCard Page10_iter_1,0.7661820197013501,0.23381797953246775
+DigitalBusinessCard Page10,DigitalBusinessCard Page10_iter_2,0.863234080399708,0.13676591873705782
+DigitalBusinessCard Page11,DigitalBusinessCard Page11_iter_1,0.013022981050089245,0.9869770179629337
+DigitalBusinessCard Page11,DigitalBusinessCard Page11_iter_2,0.011107585199148715,0.9888924138119588
+DigitalBusinessCard Page11,DigitalBusinessCard Page11_iter_3,0.0055584004657100545,0.9944415985398484
+DigitalBusinessCard Page11,DigitalBusinessCard Page11_iter_4,0.011107585199148715,0.9888924138119588
+DigitalBusinessCard Page11,DigitalBusinessCard Page11_iter_5,0.0055584004657100545,0.9944415985398484
+DigitalBusinessCard Page11,DigitalBusinessCard Page11_iter_6,0.011107585199148715,0.9888924138119588
+DigitalBusinessCard Page12,DigitalBusinessCard Page12_iter_1,0.013022981050089245,0.9869770179629337
+DigitalBusinessCard Page12,DigitalBusinessCard Page12_iter_2,0.013022981050089245,0.9869770179629337
+DigitalBusinessCard Page12,DigitalBusinessCard Page12_iter_3,0.013022981050089245,0.9869770179629337
+DigitalBusinessCard Page12,DigitalBusinessCard Page12_iter_4,0.02478563756536484,0.9752143614594208
+Event Landing Page03,Event Landing Page03_iter_1,0.011107585199148715,0.9888924138119588
+Event Landing Page05,Event Landing Page05_iter_1,0.013022981050089245,0.9869770179629337
+Event Landing Page05,Event Landing Page05_iter_2,0.011107585199148715,0.9888924138119588
+Event Landing Page11,Event Landing Page11_iter_1,0.013022981050089245,0.9869770179629337
+Event Landing Page11,Event Landing Page11_iter_2,0.013022981050089245,0.9869770179629337
+Event Landing Page11,Event Landing Page11_iter_3,0.011107585199148715,0.9888924138119588
+ExpensePlanner06,ExpensePlanner06_iter_1,0.5812573350008902,0.4187426644178525
+ExpensePlanner06,ExpensePlanner06_iter_2,0.5812573350008902,0.4187426644178525
+ExpensePlanner06,ExpensePlanner06_iter_3,0.5812573350008902,0.4187426644178525
+ExpensePlanner06,ExpensePlanner06_iter_4,0.5812573350008902,0.4187426644178525
+ExpensePlanner06,ExpensePlanner06_iter_5,0.7661820197013501,0.23381797953246775
+ExpensePlanner06,ExpensePlanner06_iter_6,0.5812573350008902,0.4187426644178525
+ExpensePlanner06,ExpensePlanner06_iter_7,0.8273686486350941,0.1726313505375372
+ExpensePlanner06,ExpensePlanner06_iter_8,0.863234080399708,0.13676591873705782
+ExpensePlanner08,ExpensePlanner08_iter_1,0.863234080399708,0.13676591873705782
+ExpensePlanner11,ExpensePlanner11_iter_1,0.0055584004657100545,0.9944415985398484
+ExpensePlanner11,ExpensePlanner11_iter_2,0.0055584004657100545,0.9944415985398484
+ExpensePlanner11,ExpensePlanner11_iter_3,0.0055584004657100545,0.9944415985398484
+ExpensePlanner11,ExpensePlanner11_iter_4,0.013022981050089245,0.9869770179629337
+ExpensePlanner11,ExpensePlanner11_iter_5,0.01893333960359083,0.9810666594153425
+ExpensePlanner11,ExpensePlanner11_iter_6,0.0055584004657100545,0.9944415985398484
+ExpensePlanner11,ExpensePlanner11_iter_7,0.0055584004657100545,0.9944415985398484
+ExpensePlanner11,ExpensePlanner11_iter_8,0.0055584004657100545,0.9944415985398484
+ExpensePlanner11,ExpensePlanner11_iter_9,0.0055584004657100545,0.9944415985398484
+ExpensePlanner11,ExpensePlanner11_iter_10,0.013022981050089245,0.9869770179629337
+ExpensePlanner11,ExpensePlanner11_iter_11,0.011107585199148715,0.9888924138119588
+ExpensePlanner13,ExpensePlanner13_iter_1,0.0055584004657100545,0.9944415985398484
+ExpensePlanner13,ExpensePlanner13_iter_2,0.01893333960359083,0.9810666594153425
+ExpensePlanner13,ExpensePlanner13_iter_3,0.011107585199148715,0.9888924138119588
+ExpensePlanner15,ExpensePlanner15_iter_1,0.013022981050089245,0.9869770179629337
+ExpensePlanner15,ExpensePlanner15_iter_2,0.013022981050089245,0.9869770179629337
+ExpensePlanner15,ExpensePlanner15_iter_3,0.011107585199148715,0.9888924138119588
+ExpensePlanner15,ExpensePlanner15_iter_4,0.0055584004657100545,0.9944415985398484
+ExpensePlanner15,ExpensePlanner15_iter_5,0.0055584004657100545,0.9944415985398484
+ExpensePlanner15,ExpensePlanner15_iter_6,0.011107585199148715,0.9888924138119588
+ExpensePlanner15,ExpensePlanner15_iter_7,0.0055584004657100545,0.9944415985398484
+ExpensePlanner15,ExpensePlanner15_iter_8,0.0055584004657100545,0.9944415985398484
+ExpensePlanner15,ExpensePlanner15_iter_9,0.02478563756536484,0.9752143614594208
+Festival Planner01,Festival Planner01_iter_1,0.7661820197013501,0.23381797953246775
+Festival Planner01,Festival Planner01_iter_2,0.863234080399708,0.13676591873705782
+Festival Planner02,Festival Planner02_iter_1,0.0055584004657100545,0.9944415985398484
+Festival Planner02,Festival Planner02_iter_2,0.0055584004657100545,0.9944415985398484
+Festival Planner02,Festival Planner02_iter_3,0.011107585199148715,0.9888924138119588
+Festival Planner05,Festival Planner05_iter_1,0.0055584004657100545,0.9944415985398484
+Festival Planner05,Festival Planner05_iter_2,0.0055584004657100545,0.9944415985398484
+Festival Planner05,Festival Planner05_iter_3,0.0055584004657100545,0.9944415985398484
+Festival Planner05,Festival Planner05_iter_4,0.0055584004657100545,0.9944415985398484
+Festival Planner05,Festival Planner05_iter_5,0.0055584004657100545,0.9944415985398484
+Festival Planner05,Festival Planner05_iter_6,0.011107585199148715,0.9888924138119588
+Festival Planner06,Festival Planner06_iter_1,0.0055584004657100545,0.9944415985398484
+Festival Planner06,Festival Planner06_iter_2,0.0055584004657100545,0.9944415985398484
+Festival Planner06,Festival Planner06_iter_3,0.0055584004657100545,0.9944415985398484
+Festival Planner06,Festival Planner06_iter_4,0.011107585199148715,0.9888924138119588
+Festival Planner08,Festival Planner08_iter_1,0.0055584004657100545,0.9944415985398484
+Festival Planner08,Festival Planner08_iter_2,0.0055584004657100545,0.9944415985398484
+Festival Planner08,Festival Planner08_iter_3,0.0055584004657100545,0.9944415985398484
+Festival Planner08,Festival Planner08_iter_4,0.011107585199148715,0.9888924138119588
+Festival Planner10,Festival Planner10_iter_1,0.0055584004657100545,0.9944415985398484
+Festival Planner10,Festival Planner10_iter_2,0.011107585199148715,0.9888924138119588
+Film effect image processing website01,Film effect image processing website01_iter_1,0.02478563756536484,0.9752143614594208
+Film effect image processing website12,Film effect image processing website12_iter_1,0.02478563756536484,0.9752143614594208
+Film effect image processing website13,Film effect image processing website13_iter_1,0.0055584004657100545,0.9944415985398484
+Film effect image processing website13,Film effect image processing website13_iter_2,0.0055584004657100545,0.9944415985398484
+Film effect image processing website13,Film effect image processing website13_iter_3,0.013022981050089245,0.9869770179629337
+Film effect image processing website13,Film effect image processing website13_iter_4,0.0055584004657100545,0.9944415985398484
+Film effect image processing website13,Film effect image processing website13_iter_5,0.0055584004657100545,0.9944415985398484
+Film effect image processing website13,Film effect image processing website13_iter_6,0.0055584004657100545,0.9944415985398484
+Film effect image processing website13,Film effect image processing website13_iter_7,0.0055584004657100545,0.9944415985398484
+Film effect image processing website13,Film effect image processing website13_iter_8,0.0055584004657100545,0.9944415985398484
+Film effect image processing website13,Film effect image processing website13_iter_9,0.011107585199148715,0.9888924138119588
+Film effect image processing website14,Film effect image processing website14_iter_1,0.0055584004657100545,0.9944415985398484
+Film effect image processing website14,Film effect image processing website14_iter_2,0.013022981050089245,0.9869770179629337
+Film effect image processing website14,Film effect image processing website14_iter_3,0.01893333960359083,0.9810666594153425
+Film effect image processing website14,Film effect image processing website14_iter_4,0.0055584004657100545,0.9944415985398484
+Film effect image processing website14,Film effect image processing website14_iter_5,0.0055584004657100545,0.9944415985398484
+Film effect image processing website14,Film effect image processing website14_iter_6,0.013022981050089245,0.9869770179629337
+Film effect image processing website14,Film effect image processing website14_iter_7,0.0055584004657100545,0.9944415985398484
+Film effect image processing website14,Film effect image processing website14_iter_8,0.0055584004657100545,0.9944415985398484
+Film effect image processing website14,Film effect image processing website14_iter_9,0.013022981050089245,0.9869770179629337
+Film effect image processing website14,Film effect image processing website14_iter_10,0.0055584004657100545,0.9944415985398484
+Film effect image processing website14,Film effect image processing website14_iter_11,0.013022981050089245,0.9869770179629337
+Film effect image processing website14,Film effect image processing website14_iter_12,0.0055584004657100545,0.9944415985398484
+Film effect image processing website14,Film effect image processing website14_iter_13,0.013022981050089245,0.9869770179629337
+Film effect image processing website14,Film effect image processing website14_iter_14,0.013022981050089245,0.9869770179629337
+Film effect image processing website14,Film effect image processing website14_iter_15,0.0055584004657100545,0.9944415985398484
+Film effect image processing website14,Film effect image processing website14_iter_16,0.013022981050089245,0.9869770179629337
+Film effect image processing website14,Film effect image processing website14_iter_17,0.013022981050089245,0.9869770179629337
+Film effect image processing website14,Film effect image processing website14_iter_18,0.013022981050089245,0.9869770179629337
+Film effect image processing website14,Film effect image processing website14_iter_19,0.011107585199148715,0.9888924138119588
+Interactive Color Palette Generator02,Interactive Color Palette Generator02_iter_1,0.8273686486350941,0.1726313505375372
+Interactive Color Palette Generator02,Interactive Color Palette Generator02_iter_2,0.863234080399708,0.13676591873705782
+Interactive Color Palette Generator06,Interactive Color Palette Generator06_iter_1,0.0055584004657100545,0.9944415985398484
+Interactive Color Palette Generator06,Interactive Color Palette Generator06_iter_2,0.011107585199148715,0.9888924138119588
+Interactive Color Palette Generator09,Interactive Color Palette Generator09_iter_1,0.011107585199148715,0.9888924138119588
+Interactive Color Palette Generator11,Interactive Color Palette Generator11_iter_1,0.011107585199148715,0.9888924138119588
+Interactive Color Palette Generator12,Interactive Color Palette Generator12_iter_1,0.7661820197013501,0.23381797953246775
+Interactive Color Palette Generator12,Interactive Color Palette Generator12_iter_2,0.863234080399708,0.13676591873705782
+Knowledge Hub08,Knowledge Hub08_iter_1,0.9636012645598082,0.036398734476590665
+Knowledge Hub08,Knowledge Hub08_iter_2,0.9181298037237117,0.08187019535815823
+Knowledge Hub08,Knowledge Hub08_iter_3,0.9636012645598082,0.036398734476590665
+Knowledge Hub08,Knowledge Hub08_iter_4,0.9807665170049018,0.01923348201433197
+Knowledge Hub10,Knowledge Hub10_iter_1,0.04320618618960888,0.956793812853597
+Knowledge Hub10,Knowledge Hub10_iter_2,0.08319629594093146,0.9168037031422647
+KnowledgeSource01,KnowledgeSource01_iter_1,0.0055584004657100545,0.9944415985398484
+KnowledgeSource01,KnowledgeSource01_iter_2,0.013022981050089245,0.9869770179629337
+KnowledgeSource01,KnowledgeSource01_iter_3,0.011107585199148715,0.9888924138119588
+KnowledgeSource04,KnowledgeSource04_iter_1,0.013022981050089245,0.9869770179629337
+KnowledgeSource04,KnowledgeSource04_iter_2,0.0055584004657100545,0.9944415985398484
+KnowledgeSource04,KnowledgeSource04_iter_3,0.011107585199148715,0.9888924138119588
+KnowledgeSource05,KnowledgeSource05_iter_1,0.013022981050089245,0.9869770179629337
+KnowledgeSource05,KnowledgeSource05_iter_2,0.0055584004657100545,0.9944415985398484
+KnowledgeSource05,KnowledgeSource05_iter_3,0.0055584004657100545,0.9944415985398484
+KnowledgeSource05,KnowledgeSource05_iter_4,0.011107585199148715,0.9888924138119588
+KnowledgeSource13,KnowledgeSource13_iter_1,0.0055584004657100545,0.9944415985398484
+KnowledgeSource13,KnowledgeSource13_iter_2,0.01893333960359083,0.9810666594153425
+KnowledgeSource13,KnowledgeSource13_iter_3,0.0055584004657100545,0.9944415985398484
+KnowledgeSource13,KnowledgeSource13_iter_4,0.01893333960359083,0.9810666594153425
+KnowledgeSource13,KnowledgeSource13_iter_5,0.0055584004657100545,0.9944415985398484
+KnowledgeSource13,KnowledgeSource13_iter_6,0.011107585199148715,0.9888924138119588
+KnowledgeSource14,KnowledgeSource14_iter_1,0.0055584004657100545,0.9944415985398484
+KnowledgeSource14,KnowledgeSource14_iter_2,0.013022981050089245,0.9869770179629337
+KnowledgeSource14,KnowledgeSource14_iter_3,0.011107585199148715,0.9888924138119588
+LUXURY photography portfolio02,LUXURY photography portfolio02_iter_1,0.0055584004657100545,0.9944415985398484
+LUXURY photography portfolio02,LUXURY photography portfolio02_iter_2,0.0055584004657100545,0.9944415985398484
+LUXURY photography portfolio02,LUXURY photography portfolio02_iter_3,0.0055584004657100545,0.9944415985398484
+LUXURY photography portfolio02,LUXURY photography portfolio02_iter_4,0.011107585199148715,0.9888924138119588
+LUXURY photography portfolio06,LUXURY photography portfolio06_iter_1,0.013022981050089245,0.9869770179629337
+LUXURY photography portfolio06,LUXURY photography portfolio06_iter_2,0.013022981050089245,0.9869770179629337
+LUXURY photography portfolio06,LUXURY photography portfolio06_iter_3,0.0055584004657100545,0.9944415985398484
+LUXURY photography portfolio06,LUXURY photography portfolio06_iter_4,0.0055584004657100545,0.9944415985398484
+LUXURY photography portfolio06,LUXURY photography portfolio06_iter_5,0.011107585199148715,0.9888924138119588
+LUXURY photography portfolio08,LUXURY photography portfolio08_iter_1,0.013022981050089245,0.9869770179629337
+LUXURY photography portfolio08,LUXURY photography portfolio08_iter_2,0.013022981050089245,0.9869770179629337
+LUXURY photography portfolio08,LUXURY photography portfolio08_iter_3,0.013022981050089245,0.9869770179629337
+LUXURY photography portfolio08,LUXURY photography portfolio08_iter_4,0.011107585199148715,0.9888924138119588
+LUXURY photography portfolio09,LUXURY photography portfolio09_iter_1,0.013022981050089245,0.9869770179629337
+LUXURY photography portfolio09,LUXURY photography portfolio09_iter_2,0.0055584004657100545,0.9944415985398484
+LUXURY photography portfolio09,LUXURY photography portfolio09_iter_3,0.0055584004657100545,0.9944415985398484
+LUXURY photography portfolio09,LUXURY photography portfolio09_iter_4,0.0055584004657100545,0.9944415985398484
+LUXURY photography portfolio09,LUXURY photography portfolio09_iter_5,0.0055584004657100545,0.9944415985398484
+LUXURY photography portfolio09,LUXURY photography portfolio09_iter_6,0.011107585199148715,0.9888924138119588
+LUXURY photography portfolio12,LUXURY photography portfolio12_iter_1,0.0055584004657100545,0.9944415985398484
+LUXURY photography portfolio12,LUXURY photography portfolio12_iter_2,0.011107585199148715,0.9888924138119588
+LUXURY photography portfolio13,LUXURY photography portfolio13_iter_1,0.0055584004657100545,0.9944415985398484
+LUXURY photography portfolio13,LUXURY photography portfolio13_iter_2,0.0055584004657100545,0.9944415985398484
+LUXURY photography portfolio13,LUXURY photography portfolio13_iter_3,0.0055584004657100545,0.9944415985398484
+LUXURY photography portfolio13,LUXURY photography portfolio13_iter_4,0.0055584004657100545,0.9944415985398484
+LUXURY photography portfolio13,LUXURY photography portfolio13_iter_5,0.0055584004657100545,0.9944415985398484
+LUXURY photography portfolio13,LUXURY photography portfolio13_iter_6,0.011107585199148715,0.9888924138119588
+Language Spelling Bee01,Language Spelling Bee01_iter_1,0.011107585199148715,0.9888924138119588
+Language Spelling Bee02,Language Spelling Bee02_iter_1,0.01893333960359083,0.9810666594153425
+Language Spelling Bee02,Language Spelling Bee02_iter_2,0.011107585199148715,0.9888924138119588
+Language Spelling Bee05,Language Spelling Bee05_iter_1,0.01893333960359083,0.9810666594153425
+Language Spelling Bee05,Language Spelling Bee05_iter_2,0.0055584004657100545,0.9944415985398484
+Language Spelling Bee05,Language Spelling Bee05_iter_3,0.011107585199148715,0.9888924138119588
+Language Spelling Bee07,Language Spelling Bee07_iter_1,0.0055584004657100545,0.9944415985398484
+Language Spelling Bee07,Language Spelling Bee07_iter_2,0.0055584004657100545,0.9944415985398484
+Language Spelling Bee07,Language Spelling Bee07_iter_3,0.0055584004657100545,0.9944415985398484
+Language Spelling Bee07,Language Spelling Bee07_iter_4,0.0055584004657100545,0.9944415985398484
+Language Spelling Bee07,Language Spelling Bee07_iter_5,0.011107585199148715,0.9888924138119588
+Language Spelling Bee08,Language Spelling Bee08_iter_1,0.0055584004657100545,0.9944415985398484
+Language Spelling Bee08,Language Spelling Bee08_iter_2,0.011107585199148715,0.9888924138119588
+Language Spelling Bee09,Language Spelling Bee09_iter_1,0.0055584004657100545,0.9944415985398484
+Language Spelling Bee09,Language Spelling Bee09_iter_2,0.0055584004657100545,0.9944415985398484
+Language Spelling Bee09,Language Spelling Bee09_iter_3,0.0055584004657100545,0.9944415985398484
+Language Spelling Bee09,Language Spelling Bee09_iter_4,0.011107585199148715,0.9888924138119588
+Language Spelling Bee10,Language Spelling Bee10_iter_1,0.0055584004657100545,0.9944415985398484
+Language Spelling Bee10,Language Spelling Bee10_iter_2,0.0055584004657100545,0.9944415985398484
+Language Spelling Bee10,Language Spelling Bee10_iter_3,0.0055584004657100545,0.9944415985398484
+Language Spelling Bee10,Language Spelling Bee10_iter_4,0.011107585199148715,0.9888924138119588
+Language Spelling Bee14,Language Spelling Bee14_iter_1,0.01893333960359083,0.9810666594153425
+Language Spelling Bee14,Language Spelling Bee14_iter_2,0.011107585199148715,0.9888924138119588
+Language Spelling Bee15,Language Spelling Bee15_iter_1,0.0055584004657100545,0.9944415985398484
+Language Spelling Bee15,Language Spelling Bee15_iter_2,0.013022981050089245,0.9869770179629337
+Language Spelling Bee15,Language Spelling Bee15_iter_3,0.013022981050089245,0.9869770179629337
+Language Spelling Bee15,Language Spelling Bee15_iter_4,0.011107585199148715,0.9888924138119588
+Manufacturer Website04,Manufacturer Website04_iter_1,0.013022981050089245,0.9869770179629337
+Manufacturer Website04,Manufacturer Website04_iter_2,0.0055584004657100545,0.9944415985398484
+Manufacturer Website04,Manufacturer Website04_iter_3,0.0055584004657100545,0.9944415985398484
+Manufacturer Website04,Manufacturer Website04_iter_4,0.0055584004657100545,0.9944415985398484
+Manufacturer Website04,Manufacturer Website04_iter_5,0.0055584004657100545,0.9944415985398484
+Manufacturer Website04,Manufacturer Website04_iter_6,0.011107585199148715,0.9888924138119588
+Manufacturer Website06,Manufacturer Website06_iter_1,0.013022981050089245,0.9869770179629337
+Manufacturer Website06,Manufacturer Website06_iter_2,0.011107585199148715,0.9888924138119588
+Manufacturer Website08,Manufacturer Website08_iter_1,0.0055584004657100545,0.9944415985398484
+Manufacturer Website08,Manufacturer Website08_iter_2,0.02478563756536484,0.9752143614594208
+Manufacturer Website11,Manufacturer Website11_iter_1,0.0055584004657100545,0.9944415985398484
+Manufacturer Website11,Manufacturer Website11_iter_2,0.011107585199148715,0.9888924138119588
+Manufacturer Website12,Manufacturer Website12_iter_1,0.5812573350008902,0.4187426644178525
+Manufacturer Website12,Manufacturer Website12_iter_2,0.5812573350008902,0.4187426644178525
+Manufacturer Website12,Manufacturer Website12_iter_3,0.5812573350008902,0.4187426644178525
+Manufacturer Website12,Manufacturer Website12_iter_4,0.5812573350008902,0.4187426644178525
+Manufacturer Website12,Manufacturer Website12_iter_5,0.863234080399708,0.13676591873705782
+Markdown Note Editor with Local Storage04,Markdown Note Editor with Local Storage04_iter_1,0.011107585199148715,0.9888924138119588
+Markdown Note Editor with Local Storage08,Markdown Note Editor with Local Storage08_iter_1,0.0055584004657100545,0.9944415985398484
+Markdown Note Editor with Local Storage08,Markdown Note Editor with Local Storage08_iter_2,0.0055584004657100545,0.9944415985398484
+Markdown Note Editor with Local Storage08,Markdown Note Editor with Local Storage08_iter_3,0.011107585199148715,0.9888924138119588
+Markdown Note Editor with Local Storage09,Markdown Note Editor with Local Storage09_iter_1,0.0055584004657100545,0.9944415985398484
+Markdown Note Editor with Local Storage09,Markdown Note Editor with Local Storage09_iter_2,0.013022981050089245,0.9869770179629337
+Markdown Note Editor with Local Storage09,Markdown Note Editor with Local Storage09_iter_3,0.0055584004657100545,0.9944415985398484
+Markdown Note Editor with Local Storage09,Markdown Note Editor with Local Storage09_iter_4,0.013022981050089245,0.9869770179629337
+Markdown Note Editor with Local Storage09,Markdown Note Editor with Local Storage09_iter_5,0.0055584004657100545,0.9944415985398484
+Markdown Note Editor with Local Storage09,Markdown Note Editor with Local Storage09_iter_6,0.011107585199148715,0.9888924138119588
+Markdown Note Editor with Local Storage12,Markdown Note Editor with Local Storage12_iter_1,0.011107585199148715,0.9888924138119588
+Medical Symptom Severity Analyzer02,Medical Symptom Severity Analyzer02_iter_1,0.0055584004657100545,0.9944415985398484
+Medical Symptom Severity Analyzer02,Medical Symptom Severity Analyzer02_iter_2,0.0055584004657100545,0.9944415985398484
+Medical Symptom Severity Analyzer02,Medical Symptom Severity Analyzer02_iter_3,0.0055584004657100545,0.9944415985398484
+Medical Symptom Severity Analyzer02,Medical Symptom Severity Analyzer02_iter_4,0.011107585199148715,0.9888924138119588
+Medical Symptom Severity Analyzer04,Medical Symptom Severity Analyzer04_iter_1,0.0055584004657100545,0.9944415985398484
+Medical Symptom Severity Analyzer04,Medical Symptom Severity Analyzer04_iter_2,0.0055584004657100545,0.9944415985398484
+Medical Symptom Severity Analyzer04,Medical Symptom Severity Analyzer04_iter_3,0.0055584004657100545,0.9944415985398484
+Medical Symptom Severity Analyzer04,Medical Symptom Severity Analyzer04_iter_4,0.0055584004657100545,0.9944415985398484
+Medical Symptom Severity Analyzer04,Medical Symptom Severity Analyzer04_iter_5,0.0055584004657100545,0.9944415985398484
+Medical Symptom Severity Analyzer04,Medical Symptom Severity Analyzer04_iter_6,0.011107585199148715,0.9888924138119588
+Medical Symptom Severity Analyzer06,Medical Symptom Severity Analyzer06_iter_1,0.5812573350008902,0.4187426644178525
+Medical Symptom Severity Analyzer06,Medical Symptom Severity Analyzer06_iter_2,0.7661820197013501,0.23381797953246775
+Medical Symptom Severity Analyzer06,Medical Symptom Severity Analyzer06_iter_3,0.7661820197013501,0.23381797953246775
+Medical Symptom Severity Analyzer06,Medical Symptom Severity Analyzer06_iter_4,0.7661820197013501,0.23381797953246775
+Medical Symptom Severity Analyzer06,Medical Symptom Severity Analyzer06_iter_5,0.863234080399708,0.13676591873705782
+Medical Symptom Severity Analyzer08,Medical Symptom Severity Analyzer08_iter_1,0.5812573350008902,0.4187426644178525
+Medical Symptom Severity Analyzer08,Medical Symptom Severity Analyzer08_iter_2,0.7661820197013501,0.23381797953246775
+Medical Symptom Severity Analyzer08,Medical Symptom Severity Analyzer08_iter_3,0.7661820197013501,0.23381797953246775
+Medical Symptom Severity Analyzer08,Medical Symptom Severity Analyzer08_iter_4,0.863234080399708,0.13676591873705782
+Medical Symptom Severity Analyzer11,Medical Symptom Severity Analyzer11_iter_1,0.5812573350008902,0.4187426644178525
+Medical Symptom Severity Analyzer11,Medical Symptom Severity Analyzer11_iter_2,0.863234080399708,0.13676591873705782
+Medical Symptom Severity Analyzer14,Medical Symptom Severity Analyzer14_iter_1,0.0055584004657100545,0.9944415985398484
+Medical Symptom Severity Analyzer14,Medical Symptom Severity Analyzer14_iter_2,0.01893333960359083,0.9810666594153425
+Medical Symptom Severity Analyzer14,Medical Symptom Severity Analyzer14_iter_3,0.01893333960359083,0.9810666594153425
+Medical Symptom Severity Analyzer14,Medical Symptom Severity Analyzer14_iter_4,0.01893333960359083,0.9810666594153425
+Medical Symptom Severity Analyzer14,Medical Symptom Severity Analyzer14_iter_5,0.011107585199148715,0.9888924138119588
+Mini Shop Display01,Mini Shop Display01_iter_1,0.013022981050089245,0.9869770179629337
+Mini Shop Display01,Mini Shop Display01_iter_2,0.01893333960359083,0.9810666594153425
+Mini Shop Display01,Mini Shop Display01_iter_3,0.011107585199148715,0.9888924138119588
+Mini Shop Display05,Mini Shop Display05_iter_1,0.011107585199148715,0.9888924138119588
+Mini Shop Display07,Mini Shop Display07_iter_1,0.011107585199148715,0.9888924138119588
+Mini Shop Display11,Mini Shop Display11_iter_1,0.013022981050089245,0.9869770179629337
+Mini Shop Display11,Mini Shop Display11_iter_2,0.013022981050089245,0.9869770179629337
+Mini Shop Display11,Mini Shop Display11_iter_3,0.011107585199148715,0.9888924138119588
+Mini Shop Display12,Mini Shop Display12_iter_1,0.7661820197013501,0.23381797953246775
+Mini Shop Display12,Mini Shop Display12_iter_2,0.7661820197013501,0.23381797953246775
+Mini Shop Display12,Mini Shop Display12_iter_3,0.7661820197013501,0.23381797953246775
+Mini Shop Display12,Mini Shop Display12_iter_4,0.863234080399708,0.13676591873705782
+MoodMaker06,MoodMaker06_iter_1,0.0055584004657100545,0.9944415985398484
+MoodMaker06,MoodMaker06_iter_2,0.011107585199148715,0.9888924138119588
+MoodMaker09,MoodMaker09_iter_1,0.0055584004657100545,0.9944415985398484
+MoodMaker09,MoodMaker09_iter_2,0.0055584004657100545,0.9944415985398484
+MoodMaker09,MoodMaker09_iter_3,0.0055584004657100545,0.9944415985398484
+MoodMaker09,MoodMaker09_iter_4,0.0055584004657100545,0.9944415985398484
+MoodMaker09,MoodMaker09_iter_5,0.0055584004657100545,0.9944415985398484
+MoodMaker09,MoodMaker09_iter_6,0.013022981050089245,0.9869770179629337
+MoodMaker09,MoodMaker09_iter_7,0.011107585199148715,0.9888924138119588
+MoodMaker10,MoodMaker10_iter_1,0.0055584004657100545,0.9944415985398484
+MoodMaker10,MoodMaker10_iter_2,0.011107585199148715,0.9888924138119588
+MoodMaker12,MoodMaker12_iter_1,0.0055584004657100545,0.9944415985398484
+MoodMaker12,MoodMaker12_iter_2,0.0055584004657100545,0.9944415985398484
+MoodMaker12,MoodMaker12_iter_3,0.0055584004657100545,0.9944415985398484
+MoodMaker12,MoodMaker12_iter_4,0.011107585199148715,0.9888924138119588
+Music Collection01,Music Collection01_iter_1,0.013022981050089245,0.9869770179629337
+Music Collection01,Music Collection01_iter_2,0.0055584004657100545,0.9944415985398484
+Music Collection01,Music Collection01_iter_3,0.011107585199148715,0.9888924138119588
+Music Collection03,Music Collection03_iter_1,0.0055584004657100545,0.9944415985398484
+Music Collection03,Music Collection03_iter_2,0.013022981050089245,0.9869770179629337
+Music Collection03,Music Collection03_iter_3,0.011107585199148715,0.9888924138119588
+Music Collection09,Music Collection09_iter_1,0.5812573350008902,0.4187426644178525
+Music Collection09,Music Collection09_iter_2,0.5812573350008902,0.4187426644178525
+Music Collection09,Music Collection09_iter_3,0.863234080399708,0.13676591873705782
+Music Collection10,Music Collection10_iter_1,0.7661820197013501,0.23381797953246775
+Music Collection10,Music Collection10_iter_2,0.5812573350008902,0.4187426644178525
+Music Collection10,Music Collection10_iter_3,0.863234080399708,0.13676591873705782
+Music Collection13,Music Collection13_iter_1,0.0055584004657100545,0.9944415985398484
+Music Collection13,Music Collection13_iter_2,0.013022981050089245,0.9869770179629337
+Music Collection13,Music Collection13_iter_3,0.011107585199148715,0.9888924138119588
+OfficeEmployeeTaskAllocator01,OfficeEmployeeTaskAllocator01_iter_1,0.011107585199148715,0.9888924138119588
+OfficeEmployeeTaskAllocator02,OfficeEmployeeTaskAllocator02_iter_1,0.0055584004657100545,0.9944415985398484
+OfficeEmployeeTaskAllocator02,OfficeEmployeeTaskAllocator02_iter_2,0.011107585199148715,0.9888924138119588
+OfficeEmployeeTaskAllocator09,OfficeEmployeeTaskAllocator09_iter_1,0.7661820197013501,0.23381797953246775
+OfficeEmployeeTaskAllocator09,OfficeEmployeeTaskAllocator09_iter_2,0.5812573350008902,0.4187426644178525
+OfficeEmployeeTaskAllocator09,OfficeEmployeeTaskAllocator09_iter_3,0.7661820197013501,0.23381797953246775
+OfficeEmployeeTaskAllocator09,OfficeEmployeeTaskAllocator09_iter_4,0.5812573350008902,0.4187426644178525
+OfficeEmployeeTaskAllocator09,OfficeEmployeeTaskAllocator09_iter_5,0.7661820197013501,0.23381797953246775
+OfficeEmployeeTaskAllocator09,OfficeEmployeeTaskAllocator09_iter_6,0.5812573350008902,0.4187426644178525
+OfficeEmployeeTaskAllocator09,OfficeEmployeeTaskAllocator09_iter_7,0.7661820197013501,0.23381797953246775
+OfficeEmployeeTaskAllocator09,OfficeEmployeeTaskAllocator09_iter_8,0.5812573350008902,0.4187426644178525
+OfficeEmployeeTaskAllocator09,OfficeEmployeeTaskAllocator09_iter_9,0.7661820197013501,0.23381797953246775
+OfficeEmployeeTaskAllocator09,OfficeEmployeeTaskAllocator09_iter_10,0.7661820197013501,0.23381797953246775
+OfficeEmployeeTaskAllocator09,OfficeEmployeeTaskAllocator09_iter_11,0.863234080399708,0.13676591873705782
+OfficeEmployeeTaskAllocator11,OfficeEmployeeTaskAllocator11_iter_1,0.5812573350008902,0.4187426644178525
+OfficeEmployeeTaskAllocator11,OfficeEmployeeTaskAllocator11_iter_2,0.7661820197013501,0.23381797953246775
+OfficeEmployeeTaskAllocator11,OfficeEmployeeTaskAllocator11_iter_3,0.5812573350008902,0.4187426644178525
+OfficeEmployeeTaskAllocator11,OfficeEmployeeTaskAllocator11_iter_4,0.8273686486350941,0.1726313505375372
+OfficeEmployeeTaskAllocator11,OfficeEmployeeTaskAllocator11_iter_5,0.5812573350008902,0.4187426644178525
+OfficeEmployeeTaskAllocator11,OfficeEmployeeTaskAllocator11_iter_6,0.5812573350008902,0.4187426644178525
+OfficeEmployeeTaskAllocator11,OfficeEmployeeTaskAllocator11_iter_7,0.5812573350008902,0.4187426644178525
+OfficeEmployeeTaskAllocator11,OfficeEmployeeTaskAllocator11_iter_8,0.5812573350008902,0.4187426644178525
+OfficeEmployeeTaskAllocator11,OfficeEmployeeTaskAllocator11_iter_9,0.863234080399708,0.13676591873705782
+OfficeEmployeeTaskAllocator12,OfficeEmployeeTaskAllocator12_iter_1,0.013022981050089245,0.9869770179629337
+OfficeEmployeeTaskAllocator12,OfficeEmployeeTaskAllocator12_iter_2,0.011107585199148715,0.9888924138119588
+OfficeEmployeeTaskAllocator12,OfficeEmployeeTaskAllocator12_iter_3,0.0055584004657100545,0.9944415985398484
+OfficeEmployeeTaskAllocator12,OfficeEmployeeTaskAllocator12_iter_4,0.011107585199148715,0.9888924138119588
+OfficeEmployeeTaskAllocator12,OfficeEmployeeTaskAllocator12_iter_5,0.0055584004657100545,0.9944415985398484
+OfficeEmployeeTaskAllocator12,OfficeEmployeeTaskAllocator12_iter_6,0.011107585199148715,0.9888924138119588
+OfficeEmployeeTaskAllocator13,OfficeEmployeeTaskAllocator13_iter_1,0.04320618618960888,0.956793812853597
+OfficeEmployeeTaskAllocator13,OfficeEmployeeTaskAllocator13_iter_2,0.04320618618960888,0.956793812853597
+OfficeEmployeeTaskAllocator13,OfficeEmployeeTaskAllocator13_iter_3,0.04320618618960888,0.956793812853597
+OfficeEmployeeTaskAllocator13,OfficeEmployeeTaskAllocator13_iter_4,0.04320618618960888,0.956793812853597
+OfficeEmployeeTaskAllocator13,OfficeEmployeeTaskAllocator13_iter_5,0.13488390316070883,0.8651160959741749
+OfficeEmployeeTaskAllocator13,OfficeEmployeeTaskAllocator13_iter_6,0.04320618618960888,0.956793812853597
+OfficeEmployeeTaskAllocator13,OfficeEmployeeTaskAllocator13_iter_7,0.04320618618960888,0.956793812853597
+OfficeEmployeeTaskAllocator13,OfficeEmployeeTaskAllocator13_iter_8,0.04320618618960888,0.956793812853597
+OfficeEmployeeTaskAllocator13,OfficeEmployeeTaskAllocator13_iter_9,0.08319629594093146,0.9168037031422647
+Password Generator Tool03,Password Generator Tool03_iter_1,0.5812573350008902,0.4187426644178525
+Password Generator Tool03,Password Generator Tool03_iter_2,0.5812573350008902,0.4187426644178525
+Password Generator Tool03,Password Generator Tool03_iter_3,0.5812573350008902,0.4187426644178525
+Password Generator Tool03,Password Generator Tool03_iter_4,0.863234080399708,0.13676591873705782
+Password Generator Tool10,Password Generator Tool10_iter_1,0.0055584004657100545,0.9944415985398484
+Password Generator Tool10,Password Generator Tool10_iter_2,0.011107585199148715,0.9888924138119588
+Password Generator Tool13,Password Generator Tool13_iter_1,0.5812573350008902,0.4187426644178525
+Password Generator Tool13,Password Generator Tool13_iter_2,0.7661820197013501,0.23381797953246775
+Password Generator Tool13,Password Generator Tool13_iter_3,0.5812573350008902,0.4187426644178525
+Password Generator Tool13,Password Generator Tool13_iter_4,0.863234080399708,0.13676591873705782
+Photo Quote Creator01,Photo Quote Creator01_iter_1,0.0055584004657100545,0.9944415985398484
+Photo Quote Creator01,Photo Quote Creator01_iter_2,0.013022981050089245,0.9869770179629337
+Photo Quote Creator01,Photo Quote Creator01_iter_3,0.0055584004657100545,0.9944415985398484
+Photo Quote Creator01,Photo Quote Creator01_iter_4,0.011107585199148715,0.9888924138119588
+Photo Quote Creator04,Photo Quote Creator04_iter_1,0.9636012645598082,0.036398734476590665
+Photo Quote Creator04,Photo Quote Creator04_iter_2,0.9636012645598082,0.036398734476590665
+Photo Quote Creator04,Photo Quote Creator04_iter_3,0.9807665170049018,0.01923348201433197
+Photo Quote Creator05,Photo Quote Creator05_iter_1,0.9636012645598082,0.036398734476590665
+Photo Quote Creator05,Photo Quote Creator05_iter_2,0.9636012645598082,0.036398734476590665
+Photo Quote Creator05,Photo Quote Creator05_iter_3,0.9636012645598082,0.036398734476590665
+Photo Quote Creator05,Photo Quote Creator05_iter_4,0.9807665170049018,0.01923348201433197
+Photo Quote Creator06,Photo Quote Creator06_iter_1,0.9636012645598082,0.036398734476590665
+Photo Quote Creator06,Photo Quote Creator06_iter_2,0.9181298037237117,0.08187019535815823
+Photo Quote Creator06,Photo Quote Creator06_iter_3,0.9181298037237117,0.08187019535815823
+Photo Quote Creator06,Photo Quote Creator06_iter_4,0.9636012645598082,0.036398734476590665
+Photo Quote Creator06,Photo Quote Creator06_iter_5,0.9636012645598082,0.036398734476590665
+Photo Quote Creator06,Photo Quote Creator06_iter_6,0.9807665170049018,0.01923348201433197
+Photo Quote Creator07,Photo Quote Creator07_iter_1,0.9636012645598082,0.036398734476590665
+Photo Quote Creator07,Photo Quote Creator07_iter_2,0.9181298037237117,0.08187019535815823
+Photo Quote Creator07,Photo Quote Creator07_iter_3,0.9636012645598082,0.036398734476590665
+Photo Quote Creator07,Photo Quote Creator07_iter_4,0.9807665170049018,0.01923348201433197
+Photo Quote Creator13,Photo Quote Creator13_iter_1,0.09633174325413218,0.9036682558421993
+Photo Quote Creator13,Photo Quote Creator13_iter_2,0.09633174325413218,0.9036682558421993
+Photo Quote Creator13,Photo Quote Creator13_iter_3,0.09633174325413218,0.9036682558421993
+Photo Quote Creator13,Photo Quote Creator13_iter_4,0.08319629594093146,0.9168037031422647
+Photo Quote Creator15,Photo Quote Creator15_iter_1,0.9636012645598082,0.036398734476590665
+Photo Quote Creator15,Photo Quote Creator15_iter_2,0.9807665170049018,0.01923348201433197
+Photo Quote Creator16,Photo Quote Creator16_iter_1,0.9636012645598082,0.036398734476590665
+Photo Quote Creator16,Photo Quote Creator16_iter_2,0.9636012645598082,0.036398734476590665
+Photo Quote Creator16,Photo Quote Creator16_iter_3,0.9636012645598082,0.036398734476590665
+Photo Quote Creator16,Photo Quote Creator16_iter_4,0.9807665170049018,0.01923348201433197
+Photography Portfolio02,Photography Portfolio02_iter_1,0.013022981050089245,0.9869770179629337
+Photography Portfolio02,Photography Portfolio02_iter_2,0.013022981050089245,0.9869770179629337
+Photography Portfolio02,Photography Portfolio02_iter_3,0.011107585199148715,0.9888924138119588
+Photography Portfolio02,Photography Portfolio02_iter_4,0.0055584004657100545,0.9944415985398484
+Photography Portfolio02,Photography Portfolio02_iter_5,0.011107585199148715,0.9888924138119588
+Photography Portfolio02,Photography Portfolio02_iter_6,0.0055584004657100545,0.9944415985398484
+Photography Portfolio02,Photography Portfolio02_iter_7,0.011107585199148715,0.9888924138119588
+Photography Portfolio07,Photography Portfolio07_iter_1,0.8273686486350941,0.1726313505375372
+Photography Portfolio07,Photography Portfolio07_iter_2,0.7661820197013501,0.23381797953246775
+Photography Portfolio07,Photography Portfolio07_iter_3,0.863234080399708,0.13676591873705782
+Photography Portfolio08,Photography Portfolio08_iter_1,0.01893333960359083,0.9810666594153425
+Photography Portfolio08,Photography Portfolio08_iter_2,0.0055584004657100545,0.9944415985398484
+Photography Portfolio08,Photography Portfolio08_iter_3,0.01893333960359083,0.9810666594153425
+Photography Portfolio08,Photography Portfolio08_iter_4,0.011107585199148715,0.9888924138119588
+Photography Portfolio10,Photography Portfolio10_iter_1,0.7661820197013501,0.23381797953246775
+Photography Portfolio10,Photography Portfolio10_iter_2,0.863234080399708,0.13676591873705782
+Photography Portfolio11,Photography Portfolio11_iter_1,0.0055584004657100545,0.9944415985398484
+Photography Portfolio11,Photography Portfolio11_iter_2,0.011107585199148715,0.9888924138119588
+Photography Portfolio12,Photography Portfolio12_iter_1,0.013022981050089245,0.9869770179629337
+Photography Portfolio12,Photography Portfolio12_iter_2,0.013022981050089245,0.9869770179629337
+Photography Portfolio12,Photography Portfolio12_iter_3,0.013022981050089245,0.9869770179629337
+Photography Portfolio12,Photography Portfolio12_iter_4,0.013022981050089245,0.9869770179629337
+Photography Portfolio12,Photography Portfolio12_iter_5,0.011107585199148715,0.9888924138119588
+Product Showcase01,Product Showcase01_iter_1,0.013022981050089245,0.9869770179629337
+Product Showcase01,Product Showcase01_iter_2,0.011107585199148715,0.9888924138119588
+Product Showcase04,Product Showcase04_iter_1,0.01893333960359083,0.9810666594153425
+Product Showcase04,Product Showcase04_iter_2,0.011107585199148715,0.9888924138119588
+Product Showcase05,Product Showcase05_iter_1,0.5812573350008902,0.4187426644178525
+Product Showcase05,Product Showcase05_iter_2,0.7661820197013501,0.23381797953246775
+Product Showcase05,Product Showcase05_iter_3,0.7661820197013501,0.23381797953246775
+Product Showcase05,Product Showcase05_iter_4,0.863234080399708,0.13676591873705782
+Product Showcase07,Product Showcase07_iter_1,0.863234080399708,0.13676591873705782
+Product Showcase07,Product Showcase07_iter_2,0.7661820197013501,0.23381797953246775
+Product Showcase07,Product Showcase07_iter_3,0.863234080399708,0.13676591873705782
+Professional Portfolio01,Professional Portfolio01_iter_1,0.013022981050089245,0.9869770179629337
+Professional Portfolio01,Professional Portfolio01_iter_2,0.013022981050089245,0.9869770179629337
+Professional Portfolio01,Professional Portfolio01_iter_3,0.013022981050089245,0.9869770179629337
+Professional Portfolio01,Professional Portfolio01_iter_4,0.011107585199148715,0.9888924138119588
+Professional Portfolio02,Professional Portfolio02_iter_1,0.013022981050089245,0.9869770179629337
+Professional Portfolio02,Professional Portfolio02_iter_2,0.013022981050089245,0.9869770179629337
+Professional Portfolio02,Professional Portfolio02_iter_3,0.013022981050089245,0.9869770179629337
+Professional Portfolio02,Professional Portfolio02_iter_4,0.0055584004657100545,0.9944415985398484
+Professional Portfolio02,Professional Portfolio02_iter_5,0.0055584004657100545,0.9944415985398484
+Professional Portfolio02,Professional Portfolio02_iter_6,0.0055584004657100545,0.9944415985398484
+Professional Portfolio02,Professional Portfolio02_iter_7,0.0055584004657100545,0.9944415985398484
+Professional Portfolio02,Professional Portfolio02_iter_8,0.011107585199148715,0.9888924138119588
+Professional Portfolio05,Professional Portfolio05_iter_1,0.011107585199148715,0.9888924138119588
+Professional Portfolio08,Professional Portfolio08_iter_1,0.013022981050089245,0.9869770179629337
+Professional Portfolio08,Professional Portfolio08_iter_2,0.013022981050089245,0.9869770179629337
+Professional Portfolio08,Professional Portfolio08_iter_3,0.011107585199148715,0.9888924138119588
+Professional Portfolio12,Professional Portfolio12_iter_1,0.013022981050089245,0.9869770179629337
+Professional Portfolio12,Professional Portfolio12_iter_2,0.013022981050089245,0.9869770179629337
+Professional Portfolio12,Professional Portfolio12_iter_3,0.011107585199148715,0.9888924138119588
+Professional Portfolio13,Professional Portfolio13_iter_1,0.013022981050089245,0.9869770179629337
+Professional Portfolio13,Professional Portfolio13_iter_2,0.0055584004657100545,0.9944415985398484
+Professional Portfolio13,Professional Portfolio13_iter_3,0.0055584004657100545,0.9944415985398484
+Professional Portfolio13,Professional Portfolio13_iter_4,0.011107585199148715,0.9888924138119588
+Progress Tracker03,Progress Tracker03_iter_1,0.013022981050089245,0.9869770179629337
+Progress Tracker03,Progress Tracker03_iter_2,0.013022981050089245,0.9869770179629337
+Progress Tracker03,Progress Tracker03_iter_3,0.011107585199148715,0.9888924138119588
+Progress Tracker05,Progress Tracker05_iter_1,0.011107585199148715,0.9888924138119588
+ReactTetris Game02,ReactTetris Game02_iter_1,0.5812573350008902,0.4187426644178525
+ReactTetris Game02,ReactTetris Game02_iter_2,0.5812573350008902,0.4187426644178525
+ReactTetris Game02,ReactTetris Game02_iter_3,0.7661820197013501,0.23381797953246775
+ReactTetris Game02,ReactTetris Game02_iter_4,0.7661820197013501,0.23381797953246775
+ReactTetris Game02,ReactTetris Game02_iter_5,0.863234080399708,0.13676591873705782
+ReactTetris Game09,ReactTetris Game09_iter_1,0.5812573350008902,0.4187426644178525
+ReactTetris Game09,ReactTetris Game09_iter_2,0.7661820197013501,0.23381797953246775
+ReactTetris Game09,ReactTetris Game09_iter_3,0.7661820197013501,0.23381797953246775
+ReactTetris Game09,ReactTetris Game09_iter_4,0.7661820197013501,0.23381797953246775
+ReactTetris Game09,ReactTetris Game09_iter_5,0.7661820197013501,0.23381797953246775
+ReactTetris Game09,ReactTetris Game09_iter_6,0.7661820197013501,0.23381797953246775
+ReactTetris Game09,ReactTetris Game09_iter_7,0.7661820197013501,0.23381797953246775
+ReactTetris Game09,ReactTetris Game09_iter_8,0.7661820197013501,0.23381797953246775
+ReactTetris Game09,ReactTetris Game09_iter_9,0.7661820197013501,0.23381797953246775
+ReactTetris Game09,ReactTetris Game09_iter_10,0.863234080399708,0.13676591873705782
+Research Paper Gallery03,Research Paper Gallery03_iter_1,0.013022981050089245,0.9869770179629337
+Research Paper Gallery03,Research Paper Gallery03_iter_2,0.011107585199148715,0.9888924138119588
+Research Paper Gallery05,Research Paper Gallery05_iter_1,0.0055584004657100545,0.9944415985398484
+Research Paper Gallery05,Research Paper Gallery05_iter_2,0.0055584004657100545,0.9944415985398484
+Research Paper Gallery05,Research Paper Gallery05_iter_3,0.0055584004657100545,0.9944415985398484
+Research Paper Gallery05,Research Paper Gallery05_iter_4,0.011107585199148715,0.9888924138119588
+ShapeMaster01,ShapeMaster01_iter_1,0.011107585199148715,0.9888924138119588
+ShapeMaster02,ShapeMaster02_iter_1,0.0055584004657100545,0.9944415985398484
+ShapeMaster02,ShapeMaster02_iter_2,0.0055584004657100545,0.9944415985398484
+ShapeMaster02,ShapeMaster02_iter_3,0.0055584004657100545,0.9944415985398484
+ShapeMaster02,ShapeMaster02_iter_4,0.0055584004657100545,0.9944415985398484
+ShapeMaster02,ShapeMaster02_iter_5,0.011107585199148715,0.9888924138119588
+ShapeMaster03,ShapeMaster03_iter_1,0.7661820197013501,0.23381797953246775
+ShapeMaster03,ShapeMaster03_iter_2,0.7661820197013501,0.23381797953246775
+ShapeMaster03,ShapeMaster03_iter_3,0.5812573350008902,0.4187426644178525
+ShapeMaster03,ShapeMaster03_iter_4,0.7661820197013501,0.23381797953246775
+ShapeMaster03,ShapeMaster03_iter_5,0.863234080399708,0.13676591873705782
+ShapeMaster05,ShapeMaster05_iter_1,0.0055584004657100545,0.9944415985398484
+ShapeMaster05,ShapeMaster05_iter_2,0.013022981050089245,0.9869770179629337
+ShapeMaster05,ShapeMaster05_iter_3,0.011107585199148715,0.9888924138119588
+ShapeMaster10,ShapeMaster10_iter_1,0.0055584004657100545,0.9944415985398484
+ShapeMaster10,ShapeMaster10_iter_2,0.013022981050089245,0.9869770179629337
+ShapeMaster10,ShapeMaster10_iter_3,0.0055584004657100545,0.9944415985398484
+ShapeMaster10,ShapeMaster10_iter_4,0.013022981050089245,0.9869770179629337
+ShapeMaster10,ShapeMaster10_iter_5,0.0055584004657100545,0.9944415985398484
+ShapeMaster10,ShapeMaster10_iter_6,0.013022981050089245,0.9869770179629337
+ShapeMaster10,ShapeMaster10_iter_7,0.0055584004657100545,0.9944415985398484
+ShapeMaster10,ShapeMaster10_iter_8,0.011107585199148715,0.9888924138119588
+ShapeMaster12,ShapeMaster12_iter_1,0.04320618618960888,0.956793812853597
+ShapeMaster12,ShapeMaster12_iter_2,0.09633174325413218,0.9036682558421993
+ShapeMaster12,ShapeMaster12_iter_3,0.08319629594093146,0.9168037031422647
+ShapeMaster13,ShapeMaster13_iter_1,0.9181298037237117,0.08187019535815823
+ShapeMaster13,ShapeMaster13_iter_2,0.9181298037237117,0.08187019535815823
+ShapeMaster13,ShapeMaster13_iter_3,0.9181298037237117,0.08187019535815823
+ShapeMaster13,ShapeMaster13_iter_4,0.9181298037237117,0.08187019535815823
+ShapeMaster13,ShapeMaster13_iter_5,0.9181298037237117,0.08187019535815823
+ShapeMaster13,ShapeMaster13_iter_6,0.9807665170049018,0.01923348201433197
+ShapeMaster16,ShapeMaster16_iter_1,0.9636012645598082,0.036398734476590665
+ShapeMaster16,ShapeMaster16_iter_2,0.9181298037237117,0.08187019535815823
+ShapeMaster16,ShapeMaster16_iter_3,0.9636012645598082,0.036398734476590665
+ShapeMaster16,ShapeMaster16_iter_4,0.9181298037237117,0.08187019535815823
+ShapeMaster16,ShapeMaster16_iter_5,0.9807665170049018,0.01923348201433197
+Simple Image Resizer01,Simple Image Resizer01_iter_1,0.013022981050089245,0.9869770179629337
+Simple Image Resizer01,Simple Image Resizer01_iter_2,0.011107585199148715,0.9888924138119588
+Simple Image Resizer04,Simple Image Resizer04_iter_1,0.7661820197013501,0.23381797953246775
+Simple Image Resizer04,Simple Image Resizer04_iter_2,0.863234080399708,0.13676591873705782
+Simple Image Resizer05,Simple Image Resizer05_iter_1,0.5812573350008902,0.4187426644178525
+Simple Image Resizer05,Simple Image Resizer05_iter_2,0.7661820197013501,0.23381797953246775
+Simple Image Resizer05,Simple Image Resizer05_iter_3,0.7661820197013501,0.23381797953246775
+Simple Image Resizer05,Simple Image Resizer05_iter_4,0.7661820197013501,0.23381797953246775
+Simple Image Resizer05,Simple Image Resizer05_iter_5,0.7661820197013501,0.23381797953246775
+Simple Image Resizer05,Simple Image Resizer05_iter_6,0.863234080399708,0.13676591873705782
+Simple Image Resizer06,Simple Image Resizer06_iter_1,0.5812573350008902,0.4187426644178525
+Simple Image Resizer06,Simple Image Resizer06_iter_2,0.5812573350008902,0.4187426644178525
+Simple Image Resizer06,Simple Image Resizer06_iter_3,0.8273686486350941,0.1726313505375372
+Simple Image Resizer06,Simple Image Resizer06_iter_4,0.7661820197013501,0.23381797953246775
+Simple Image Resizer06,Simple Image Resizer06_iter_5,0.7661820197013501,0.23381797953246775
+Simple Image Resizer06,Simple Image Resizer06_iter_6,0.7661820197013501,0.23381797953246775
+Simple Image Resizer06,Simple Image Resizer06_iter_7,0.8273686486350941,0.1726313505375372
+Simple Image Resizer06,Simple Image Resizer06_iter_8,0.7661820197013501,0.23381797953246775
+Simple Image Resizer06,Simple Image Resizer06_iter_9,0.863234080399708,0.13676591873705782
+Simple Image Resizer14,Simple Image Resizer14_iter_1,0.9181298037237117,0.08187019535815823
+Simple Image Resizer14,Simple Image Resizer14_iter_2,0.9181298037237117,0.08187019535815823
+Simple Image Resizer14,Simple Image Resizer14_iter_3,0.9636012645598082,0.036398734476590665
+Simple Image Resizer14,Simple Image Resizer14_iter_4,0.9636012645598082,0.036398734476590665
+Simple Image Resizer14,Simple Image Resizer14_iter_5,0.9636012645598082,0.036398734476590665
+Simple Image Resizer14,Simple Image Resizer14_iter_6,0.9807665170049018,0.01923348201433197
+Simple Image Resizer15,Simple Image Resizer15_iter_1,0.9181298037237117,0.08187019535815823
+Simple Image Resizer15,Simple Image Resizer15_iter_2,0.9636012645598082,0.036398734476590665
+Simple Image Resizer15,Simple Image Resizer15_iter_3,0.9636012645598082,0.036398734476590665
+Simple Image Resizer15,Simple Image Resizer15_iter_4,0.9636012645598082,0.036398734476590665
+Simple Image Resizer15,Simple Image Resizer15_iter_5,0.9636012645598082,0.036398734476590665
+Simple Image Resizer15,Simple Image Resizer15_iter_6,0.9807665170049018,0.01923348201433197
+Simple MBTI Test01,Simple MBTI Test01_iter_1,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test01,Simple MBTI Test01_iter_2,0.011107585199148715,0.9888924138119588
+Simple MBTI Test06,Simple MBTI Test06_iter_1,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test06,Simple MBTI Test06_iter_2,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test06,Simple MBTI Test06_iter_3,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test06,Simple MBTI Test06_iter_4,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test06,Simple MBTI Test06_iter_5,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test06,Simple MBTI Test06_iter_6,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test06,Simple MBTI Test06_iter_7,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test06,Simple MBTI Test06_iter_8,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test06,Simple MBTI Test06_iter_9,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test06,Simple MBTI Test06_iter_10,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test06,Simple MBTI Test06_iter_11,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test06,Simple MBTI Test06_iter_12,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test06,Simple MBTI Test06_iter_13,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test06,Simple MBTI Test06_iter_14,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test06,Simple MBTI Test06_iter_15,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test06,Simple MBTI Test06_iter_16,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test06,Simple MBTI Test06_iter_17,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test06,Simple MBTI Test06_iter_18,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test06,Simple MBTI Test06_iter_19,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test06,Simple MBTI Test06_iter_20,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test06,Simple MBTI Test06_iter_21,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test06,Simple MBTI Test06_iter_22,0.011107585199148715,0.9888924138119588
+Simple MBTI Test08,Simple MBTI Test08_iter_1,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test08,Simple MBTI Test08_iter_2,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test08,Simple MBTI Test08_iter_3,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test08,Simple MBTI Test08_iter_4,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test08,Simple MBTI Test08_iter_5,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test08,Simple MBTI Test08_iter_6,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test08,Simple MBTI Test08_iter_7,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test08,Simple MBTI Test08_iter_8,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test08,Simple MBTI Test08_iter_9,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test08,Simple MBTI Test08_iter_10,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test08,Simple MBTI Test08_iter_11,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test08,Simple MBTI Test08_iter_12,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test08,Simple MBTI Test08_iter_13,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test08,Simple MBTI Test08_iter_14,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test08,Simple MBTI Test08_iter_15,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test08,Simple MBTI Test08_iter_16,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test08,Simple MBTI Test08_iter_17,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test08,Simple MBTI Test08_iter_18,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test08,Simple MBTI Test08_iter_19,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test08,Simple MBTI Test08_iter_20,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test08,Simple MBTI Test08_iter_21,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test08,Simple MBTI Test08_iter_22,0.011107585199148715,0.9888924138119588
+Simple MBTI Test12,Simple MBTI Test12_iter_1,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test12,Simple MBTI Test12_iter_2,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test12,Simple MBTI Test12_iter_3,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test12,Simple MBTI Test12_iter_4,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test12,Simple MBTI Test12_iter_5,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test12,Simple MBTI Test12_iter_6,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test12,Simple MBTI Test12_iter_7,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test12,Simple MBTI Test12_iter_8,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test12,Simple MBTI Test12_iter_9,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test12,Simple MBTI Test12_iter_10,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test12,Simple MBTI Test12_iter_11,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test12,Simple MBTI Test12_iter_12,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test12,Simple MBTI Test12_iter_13,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test12,Simple MBTI Test12_iter_14,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test12,Simple MBTI Test12_iter_15,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test12,Simple MBTI Test12_iter_16,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test12,Simple MBTI Test12_iter_17,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test12,Simple MBTI Test12_iter_18,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test12,Simple MBTI Test12_iter_19,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test12,Simple MBTI Test12_iter_20,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test12,Simple MBTI Test12_iter_21,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test12,Simple MBTI Test12_iter_22,0.011107585199148715,0.9888924138119588
+Simple MBTI Test14,Simple MBTI Test14_iter_1,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test14,Simple MBTI Test14_iter_2,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test14,Simple MBTI Test14_iter_3,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test14,Simple MBTI Test14_iter_4,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test14,Simple MBTI Test14_iter_5,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test14,Simple MBTI Test14_iter_6,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test14,Simple MBTI Test14_iter_7,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test14,Simple MBTI Test14_iter_8,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test14,Simple MBTI Test14_iter_9,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test14,Simple MBTI Test14_iter_10,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test14,Simple MBTI Test14_iter_11,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test14,Simple MBTI Test14_iter_12,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test14,Simple MBTI Test14_iter_13,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test14,Simple MBTI Test14_iter_14,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test14,Simple MBTI Test14_iter_15,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test14,Simple MBTI Test14_iter_16,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test14,Simple MBTI Test14_iter_17,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test14,Simple MBTI Test14_iter_18,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test14,Simple MBTI Test14_iter_19,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test14,Simple MBTI Test14_iter_20,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test14,Simple MBTI Test14_iter_21,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test14,Simple MBTI Test14_iter_22,0.013022981050089245,0.9869770179629337
+Simple MBTI Test14,Simple MBTI Test14_iter_23,0.0055584004657100545,0.9944415985398484
+Simple MBTI Test14,Simple MBTI Test14_iter_24,0.011107585199148715,0.9888924138119588
+Social Link Tree01,Social Link Tree01_iter_1,0.011107585199148715,0.9888924138119588
+Social Link Tree02,Social Link Tree02_iter_1,0.011107585199148715,0.9888924138119588
+Social Link Tree06,Social Link Tree06_iter_1,0.011107585199148715,0.9888924138119588
+Social Link Tree09,Social Link Tree09_iter_1,0.0055584004657100545,0.9944415985398484
+Social Link Tree09,Social Link Tree09_iter_2,0.0055584004657100545,0.9944415985398484
+Social Link Tree09,Social Link Tree09_iter_3,0.0055584004657100545,0.9944415985398484
+Social Link Tree09,Social Link Tree09_iter_4,0.011107585199148715,0.9888924138119588
+Story Display04,Story Display04_iter_1,0.7661820197013501,0.23381797953246775
+Story Display04,Story Display04_iter_2,0.7661820197013501,0.23381797953246775
+Story Display04,Story Display04_iter_3,0.5812573350008902,0.4187426644178525
+Story Display04,Story Display04_iter_4,0.863234080399708,0.13676591873705782
+Story Display05,Story Display05_iter_1,0.7661820197013501,0.23381797953246775
+Story Display05,Story Display05_iter_2,0.7661820197013501,0.23381797953246775
+Story Display05,Story Display05_iter_3,0.7661820197013501,0.23381797953246775
+Story Display05,Story Display05_iter_4,0.5812573350008902,0.4187426644178525
+Story Display05,Story Display05_iter_5,0.5812573350008902,0.4187426644178525
+Story Display05,Story Display05_iter_6,0.863234080399708,0.13676591873705782
+Story Display10,Story Display10_iter_1,0.02478563756536484,0.9752143614594208
+Story Display12,Story Display12_iter_1,0.0055584004657100545,0.9944415985398484
+Story Display12,Story Display12_iter_2,0.011107585199148715,0.9888924138119588
+Tech Blog Platform02,Tech Blog Platform02_iter_1,0.013022981050089245,0.9869770179629337
+Tech Blog Platform02,Tech Blog Platform02_iter_2,0.013022981050089245,0.9869770179629337
+Tech Blog Platform02,Tech Blog Platform02_iter_3,0.011107585199148715,0.9888924138119588
+Tech Blog Platform13,Tech Blog Platform13_iter_1,0.02478563756536484,0.9752143614594208
+Tech Blog Platform15,Tech Blog Platform15_iter_1,0.013022981050089245,0.9869770179629337
+Tech Blog Platform15,Tech Blog Platform15_iter_2,0.02478563756536484,0.9752143614594208
+VideoClipper12,VideoClipper12_iter_1,0.0055584004657100545,0.9944415985398484
+VideoClipper12,VideoClipper12_iter_2,0.013022981050089245,0.9869770179629337
+VideoClipper12,VideoClipper12_iter_3,0.0055584004657100545,0.9944415985398484
+VideoClipper12,VideoClipper12_iter_4,0.0055584004657100545,0.9944415985398484
+VideoClipper12,VideoClipper12_iter_5,0.0055584004657100545,0.9944415985398484
+VideoClipper12,VideoClipper12_iter_6,0.0055584004657100545,0.9944415985398484
+VideoClipper12,VideoClipper12_iter_7,0.011107585199148715,0.9888924138119588
+VideoClipper13,VideoClipper13_iter_1,0.0055584004657100545,0.9944415985398484
+VideoClipper13,VideoClipper13_iter_2,0.013022981050089245,0.9869770179629337
+VideoClipper13,VideoClipper13_iter_3,0.0055584004657100545,0.9944415985398484
+VideoClipper13,VideoClipper13_iter_4,0.0055584004657100545,0.9944415985398484
+VideoClipper13,VideoClipper13_iter_5,0.011107585199148715,0.9888924138119588
+white blog desgin01,white blog desgin01_iter_1,0.011107585199148715,0.9888924138119588
+white blog desgin04,white blog desgin04_iter_1,0.013022981050089245,0.9869770179629337
+white blog desgin04,white blog desgin04_iter_2,0.011107585199148715,0.9888924138119588
+white blog desgin05,white blog desgin05_iter_1,0.011107585199148715,0.9888924138119588
+white blog desgin06,white blog desgin06_iter_1,0.011107585199148715,0.9888924138119588
+white blog desgin07,white blog desgin07_iter_1,0.011107585199148715,0.9888924138119588
+white blog desgin08,white blog desgin08_iter_1,0.011107585199148715,0.9888924138119588
+white blog desgin10,white blog desgin10_iter_1,0.013022981050089245,0.9869770179629337
+white blog desgin10,white blog desgin10_iter_2,0.011107585199148715,0.9888924138119588
+white blog desgin11,white blog desgin11_iter_1,0.011107585199148715,0.9888924138119588
+white blog desgin15,white blog desgin15_iter_1,0.013022981050089245,0.9869770179629337
+white blog desgin15,white blog desgin15_iter_2,0.011107585199148715,0.9888924138119588

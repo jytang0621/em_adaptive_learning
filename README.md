@@ -56,6 +56,27 @@ BASE_DIR = Path("/data/hongsirui/em_adaptive_learning")
 
 ## Benchmark 基础数据位置
 
+### 数据目录结构说明
+
+两个 Benchmark（RealDevBench 和 WebDevJudge）遵循统一的目录结构：
+
+```
+{benchmark_name}/
+└── data/                          # 数据根目录
+    ├── {benchmark_name}_gt.jsonl                    # GT 文件（测试用例和真实标签）
+    ├── {benchmark_name}_code_evidence.jsonl        # 代码证据文件
+    └── traj/                      # 轨迹目录（按实验时间组织）
+        └── {timestamp}/           # 实验时间戳（格式：YYYYMMDD_HHMMSS）
+            ├── {gui_evidence}.jsonl                 # GUI 交互证据
+            └── {agent_evaluation}.xlsx              # Agent 轨迹评估结果
+```
+
+**重要说明**：
+- **静态数据**（测试用例、GT、代码证据）统一存放在 `{benchmark_name}/data/` 目录下
+- **动态数据**（GUI 证据和执行轨迹）存放在 `{benchmark_name}/data/traj/` 目录下
+- `traj` 目录按实验时间戳（格式：`YYYYMMDD_HHMMSS`）创建子文件夹，便于管理不同实验的数据
+- 所有路径配置在 `src/config.py` 中统一管理
+
 ### RealDevBench
 
 所有 RealDevBench 相关的数据路径定义在 `src/config.py` 中：
@@ -65,7 +86,7 @@ BASE_DIR = Path("/data/hongsirui/em_adaptive_learning")
 - **GT 文件**: `realdevbench/data/realdevbench_gt.jsonl` - 真实标签（Ground Truth）
 - **代码证据**: `realdevbench/data/realdevbench_code_evidence.jsonl` - 代码审查证据
 - **轨迹目录**: `realdevbench/data/traj/`
-- **GUI 证据**: `realdevbench/data/traj/20251120_155804/realdevworld_1105_res_gui_evidence.jsonl` - GUI 交互证据
+- **GUI 证据**: `realdevbench/data/traj/20251120_155804/xxx_gui_evidence.jsonl` - GUI 交互证据
 - **Agent 评估文件**: `realdevbench/data/traj/20251120_155804/mgx跑测_MGX低完成度_三合一_拆分case_带label_20251117_210104.xlsx` - Agent 轨迹评估结果
 
 ### WebDevJudge
@@ -77,7 +98,7 @@ BASE_DIR = Path("/data/hongsirui/em_adaptive_learning")
 - **GT 文件**: `webdevjudge/data/webdevjudge_unit.jsonl` - 真实标签（Ground Truth）
 - **代码证据**: `webdevjudge/data/webdevjudge_code_evidence.jsonl` - 代码审查证据
 - **轨迹目录**: `webdevjudge/data/traj/`
-- **GUI 证据**: `webdevjudge/data/traj/20251111_143620/20251111_143620_baseline_full_all_clicks.jsonl` - GUI 交互证据
+- **GUI 证据**: `webdevjudge/data/traj/20251111_143620/20251111_143620_gui_evidence.jsonl` - GUI 交互证据
 - **Agent 评估文件**: `webdevjudge/data/traj/20251111_143620/mgx_webdevjudge_w_expected_singletest_20251111_143620.xlsx` - Agent 轨迹评估结果
 
 ## 数据处理流程
@@ -171,6 +192,8 @@ train_df.to_excel("train_em_df.xlsx", index=False)
 - `weight`: 样本权重
 - `is_reflection`: 是否为反思步骤（1=是，0=否）
 - `agent_testcase_score`: Agent 测试用例分数
+
+补充说明：生成标准训练数据格式后，进行初步的环境失败和agent失败的数据标注，主要标注`delta_label`字段。少量标注后，训练效果将极具提升
 
 ## EM 流程说明
 

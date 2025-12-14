@@ -402,7 +402,10 @@ def run_prediction(df_path: str, out_dir: str, params_path: str = None):
     import json
 
     # 加载数据
+    print(f"=== Loading data from: {df_path} ===")
     df = load_data(df_path)
+    print(
+        f"=== Loaded {len(df)} rows, {df['test_case_id'].nunique()} cases ===")
     # df["M_code"] = 1.0
     print(df.shape)
     # 确保必要的列存在
@@ -488,14 +491,14 @@ def run_prediction(df_path: str, out_dir: str, params_path: str = None):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    # parser.add_argument("--data_path", type=str,
-    #                     default="train_em_df_labeled.xlsx")
     parser.add_argument("--data_path", type=str,
-                        default="./test_em_df_labeled.xlsx")
+                        default="train_em_df_labeled.xlsx")
+    # parser.add_argument("--test_path", type=str,
+    #                     default="/root/tangjingyu/EM/em_adaptive_learning/src/train_em_df_webdevjudge_ui_tars.xlsx")
     parser.add_argument("--test_path", type=str,
-                        default="webdevjudge/traj/20251111_143620/20251111_143620_test_em_df_labeled.xlsx")
+                        default="/root/tangjingyu/EM/em_adaptive_learning/src/train_em_df_webdevjudge_claude_4.xlsx")
     parser.add_argument("--params_path", type=str,
-                        default="em_outputs_refine_webdevjudge/em_params.json")
+                        default="/root/tangjingyu/EM/em_adaptive_learning/src/em_adaptive_learning/param/em_params.json")
     parser.add_argument("--out_dir", type=str,
                         default="em_outputs_refine_webdevjudge")
 
@@ -504,5 +507,5 @@ if __name__ == "__main__":
     parser.add_argument("--tau_agentfail", type=float, default=0.75)
     parser.add_argument("--tau_envfail", type=float, default=0.75)
     args = parser.parse_args()
-    main(args)
-    # run_prediction(args.test_path, args.out_dir, args.params_path)
+    # main(args)
+    run_prediction(args.test_path, args.out_dir, args.params_path)

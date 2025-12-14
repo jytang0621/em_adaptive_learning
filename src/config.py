@@ -30,7 +30,7 @@ WEBDEVJUDGE_CODE_EVIDENCE_JSONL = WEBDEVJUDGE_DATA_DIR / \
     "webdevjudge_code_evidence.jsonl"  # code evidence
 # GUI Evidence & Trajectory Directory
 WEBDEVJUDGE_TRAJ_DIR = WEBDEVJUDGE_DATA_DIR / "traj"
-WEBDEVJUDGE_GUI_EVIDENCE_JSONL = WEBDEVJUDGE_TRAJ_DIR / "baseline_agent_ui_tars" / \
-    "20251212_213137_gui_evidence.jsonl"  # gui evidence
-WEBDEVJUDGE_PRED_FILE = WEBDEVJUDGE_TRAJ_DIR / "baseline_agent_ui_tars" / \
-    "webdevjudge_pred.xlsx"  # agent evaluation file
+WEBDEVJUDGE_GUI_EVIDENCE_JSONL = WEBDEVJUDGE_TRAJ_DIR / "20251121_170336_c4s" / \
+    "webdevjudge_wexp_singlecase_singlellm_claude4_all_clicks.jsonl"  # gui evidence
+WEBDEVJUDGE_PRED_FILE = WEBDEVJUDGE_TRAJ_DIR / "20251121_170336_c4s" / \
+    "20251121_170336_c4s.xlsx"  # agent evaluation file

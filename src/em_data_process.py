@@ -98,7 +98,65 @@ async def filter_judge_evidence(merged_df, max_concurrent=10):
     return filter_df
 
 
-def convert_to_train_data(merged_df, label_col="gt_x"):
+def load_gt_data(gt_file_path):
+    """
+    加载 GT 文件并返回 GT 数据映射字典
+    根据文件名自动判断匹配策略：
+    - low_complete.jsonl: 使用 test_case_name 匹配，取 GT_value
+    - webdevjudge_unit.jsonl: 使用 task_id 匹配，取 label
+
+    Returns:
+        tuple: (gt_dict, match_key, gt_value_key)
+            - gt_dict: 匹配键 -> GT值 的映射字典
+            - match_key: 用于匹配的键名 (test_case_name 或 task_id)
+            - gt_value_key: GT值的字段名 (GT_value 或 label)
+    """
+    if gt_file_path is None:
+        return None, None, None
+
+    gt_file_path = Path(gt_file_path)
+    file_name = gt_file_path.name
+
+    # 根据文件名确定匹配策略
+    if "low_complete" in file_name:
+        match_key = "test_case_name"
+        gt_value_key = "GT_value"
+    elif "webdevjudge_unit" in file_name:
+        match_key = "task_id"
+        gt_value_key = "label"
+    else:
+        logger.warning(
+            f"Unknown GT file type: {file_name}, using default (task_id, label)")
+        match_key = "task_id"
+        gt_value_key = "label"
+
+    # 加载 GT 数据
+    gt_dict = {}
+    with open(gt_file_path, 'r', encoding='utf-8') as f:
+        for line in f:
+            data = json.loads(line.strip())
+            key = data.get(match_key)
+            value = data.get(gt_value_key)
+            if key is not None and value is not None:
+                gt_dict[key] = value
+
+    logger.info(
+        f"Loaded {len(gt_dict)} GT entries from {file_name} using {match_key} -> {gt_value_key}")
+    return gt_dict, match_key, gt_value_key
+
+
+def convert_to_train_data(merged_df, label_col="gt_x", gt_file_path=None):
+    """
+    将合并后的 DataFrame 转换为训练数据格式
+
+    Args:
+        merged_df: 合并后的 DataFrame
+        label_col: 标签列名
+        gt_file_path: GT 文件路径，用于计算 delta_label
+    """
+    # 加载 GT 数据
+    gt_dict, match_key, gt_value_key = load_gt_data(gt_file_path)
+
     rows_out = []
     # 1 是mask，0是不mask
     for index, row in merged_df.iterrows():
@@ -130,6 +188,23 @@ def convert_to_train_data(merged_df, label_col="gt_x"):
             agent_score = row['agent_judge_x']
             is_reflection = 1
 
+        # 计算 delta_label
+        delta_label = np.nan  # 默认值
+        if gt_dict is not None:
+            # 根据 match_key 选择正确的匹配列
+            # - webdevjudge_unit.jsonl (match_key="task_id"): 使用 task_id_x 列
+            # - low_complete.jsonl (match_key="test_case_name"): 使用 test_case_id_x 列
+            if match_key == "task_id":
+                lookup_key = row['task_id_x']
+            else:
+                lookup_key = row['test_case_id_x']
+
+            gt_value = gt_dict.get(lookup_key)
+            if gt_value is not None and not pd.isna(agent_score):
+                # 比较 GT_value 和 agent_judge_x
+                # 相同则 delta_label = 0，不同则 delta_label = 1
+                delta_label = 0 if gt_value == agent_score else 1
+
         rows_out.append({
             "test_case_id": row['test_case_id_x'],
             "step": row['action_id'],
@@ -140,14 +215,15 @@ def convert_to_train_data(merged_df, label_col="gt_x"):
             "E2_code": row['code_evidence_x'],  # 该步代码审查是否符合预期（1=好，0=坏）。
             # E3_reflect：仅在 is_reflection=1 的行有值，用于建模 H（truthful vs hallucination）。
             "E3_reflect": agent_score,
-            "E4_noresp": agent_noresp,  # 该步“无响应 / 明显异常”等（1=有问题，0=正常）——可选，看你现有定义。
+            "E4_noresp": agent_noresp,  # 该步"无响应 / 明显异常"等（1=有问题，0=正常）——可选，看你现有定义。
             "M_gui": M_gui,
             "M_code": M_code,
             "M_reflect": 1,
             "M_noresp": M_noresp,
             "weight": weight,
             "is_reflection": is_reflection,
-            "agent_testcase_score":  agent_score
+            "agent_testcase_score": agent_score,
+            "delta_label": delta_label  # 新增：GT 与 agent_judge 的差异标签
         })
 
     return pd.DataFrame(rows_out)

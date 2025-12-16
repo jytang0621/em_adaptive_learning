@@ -21,10 +21,11 @@ from config import (
     WEBDEVJUDGE_TRAJ_DIR,
     WEBDEVJUDGE_GUI_EVIDENCE_JSONL,
     WEBDEVJUDGE_PRED_FILE,
+    GT_WEBDEVJUDGE_UNIT_JSONL,
 )
 
 if __name__ == "__main__":
-    need_generate = True
+    need_generate = False
     if need_generate:
         agent_judge = pd.read_excel(WEBDEVJUDGE_PRED_FILE)
         agent_judge = agent_judge[["case_name", "os_agent_score"]]
@@ -46,11 +47,12 @@ if __name__ == "__main__":
         test_df.to_excel("webdevjudge_filter_df_claude_4.xlsx", index=False)
     else:
         # 直接读取已经生成的数据
-        test_df = pd.read_excel("train_df.xlsx")
+        test_df = pd.read_excel("webdevjudge_filter_df_claude_4.xlsx")
         test_df = test_df[test_df["action_content_x"].apply(
             lambda x: "Stop" not in str(x))]
         test_df = test_df[test_df["action_content_x"].apply(
             lambda x: not pd.isna(x))]
         # train_df = sanitize_df(train_df)
-    convert_to_train_data(test_df, label_col="label_x").to_excel(
-        "train_em_df_webdevjudge_claude_4.xlsx")
+    convert_to_train_data(test_df, label_col="label_x",
+                          gt_file_path=GT_WEBDEVJUDGE_UNIT_JSONL).to_excel(
+        "webdevjudge_filter_df_claude_4.xlsx")

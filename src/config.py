@@ -34,3 +34,8 @@ WEBDEVJUDGE_GUI_EVIDENCE_JSONL = WEBDEVJUDGE_TRAJ_DIR / "20251121_170336_c4s" / 
     "webdevjudge_wexp_singlecase_singlellm_claude4_all_clicks.jsonl"  # gui evidence
 WEBDEVJUDGE_PRED_FILE = WEBDEVJUDGE_TRAJ_DIR / "20251121_170336_c4s" / \
     "20251121_170336_c4s.xlsx"  # agent evaluation file
+
+# GT Data Directory
+GT_DATA_DIR = BASE_DIR / "src" / "data_collection" / "gt"
+GT_LOW_COMPLETE_JSONL = GT_DATA_DIR / "low_complete.jsonl"
+GT_WEBDEVJUDGE_UNIT_JSONL = GT_DATA_DIR / "webdevjudge_unit.jsonl"

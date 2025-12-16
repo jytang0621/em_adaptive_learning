@@ -47,7 +47,7 @@ if __name__ == "__main__":
         test_df.to_excel("webdevjudge_filter_df_claude_4.xlsx", index=False)
     else:
         # 直接读取已经生成的数据
-        test_df = pd.read_excel("webdevjudge_filter_df_claude_4.xlsx")
+        test_df = pd.read_excel("webdevjudge_filter_df_ui_tars.xlsx")
         test_df = test_df[test_df["action_content_x"].apply(
             lambda x: "Stop" not in str(x))]
         test_df = test_df[test_df["action_content_x"].apply(
@@ -55,4 +55,4 @@ if __name__ == "__main__":
         # train_df = sanitize_df(train_df)
     convert_to_train_data(test_df, label_col="label_x",
                           gt_file_path=GT_WEBDEVJUDGE_UNIT_JSONL).to_excel(
-        "train_em_df_webdevjudge_claude_4.xlsx")
+        "train_em_df_webdevjudge_ui_tars.xlsx")

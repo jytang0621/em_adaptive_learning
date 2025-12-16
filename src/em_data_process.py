@@ -184,6 +184,9 @@ def convert_to_train_data(merged_df, label_col="gt_x", gt_file_path=None):
             M_gui = 0
             gui_evidence = row['gui_evidence_x']
 
+        # agent_testcase_score 始终从 agent_judge_x 取值（即 os_agent_score）
+        agent_testcase_score_val = row['agent_judge_x']
+
         if row["agent_noresp"] is np.nan:
             M_reflect = 1
             M_noresp = 1
@@ -203,7 +206,7 @@ def convert_to_train_data(merged_df, label_col="gt_x", gt_file_path=None):
             agent_score = row['agent_judge_x']
             is_reflection = 1
 
-        # 计算 delta_label
+        # 计算 delta_label（使用 agent_testcase_score_val 而非 agent_score）
         delta_label = np.nan  # 默认值
         if gt_dict is not None:
             # 根据 match_key 选择正确的匹配列
@@ -212,12 +215,12 @@ def convert_to_train_data(merged_df, label_col="gt_x", gt_file_path=None):
             lookup_key = row['test_case_id_x']
 
             gt_value = gt_dict.get(lookup_key)
-            if gt_value is not None and not pd.isna(agent_score):
+            if gt_value is not None and not pd.isna(agent_testcase_score_val):
                 # 比较 GT_value 和 agent_judge_x
                 # 相同则 delta_label = 0，不同则 delta_label = 1
                 logger.info(
-                    f"gt_value: {gt_value}, agent_score: {agent_score}")
-                delta_label = 0 if gt_value == agent_score else 1
+                    f"gt_value: {gt_value}, agent_score: {agent_testcase_score_val}")
+                delta_label = 0 if gt_value == agent_testcase_score_val else 1
 
         rows_out.append({
             "test_case_id": row['test_case_id_x'],
@@ -236,7 +239,7 @@ def convert_to_train_data(merged_df, label_col="gt_x", gt_file_path=None):
             "M_noresp": M_noresp,
             "weight": weight,
             "is_reflection": is_reflection,
-            "agent_testcase_score": agent_score,
+            "agent_testcase_score": agent_testcase_score_val,  # 始终填入 os_agent_score
             "delta_label": delta_label  # 新增：GT 与 agent_judge 的差异标签
         })
 

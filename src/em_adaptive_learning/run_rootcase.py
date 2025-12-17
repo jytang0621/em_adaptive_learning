@@ -136,10 +136,10 @@ def main(args):
         max_iter=500,
         tol=1e-4,
         seed=args.seed,
-        w_gui=1.0,
-        w_code=1.2,
-        w_noresp=0.3,
-        agent_weight=0.9,
+        w_gui=args.w_gui,
+        w_code=args.w_code,
+        w_noresp=args.w_noresp,
+        agent_weight=args.agent_weight,
         a_pi=5.0,
         b_pi=5.0,
         a_c0=3.0,
@@ -193,8 +193,8 @@ def main(args):
         col_agent="agent_testcase_score_x",
     )
 
-    val_correct = correct_cases_with_post(
-        em, val_df, case_col="test_case_id", margin=0.0, out_dir=str(out_dir))
+    # val_correct = correct_cases_with_post(
+    #     em, val_df, case_col="test_case_id", margin=0.0, out_dir=str(out_dir))
 
     # 保存输出
     val_pred_step.to_csv(out_dir / "val_pred_step.csv", index=False)
@@ -346,7 +346,7 @@ def correct_cases_with_post(em, df, case_col="test_case_id", margin=0.0, out_dir
     return pd.DataFrame(rows)
 
 
-def run_prediction(df_path: str, out_dir: str, params_path: str = None):
+def run_prediction(df_path: str, out_dir: str, params_path: str = None, args=None):
     """
     使用已有参数进行预测
 
@@ -354,6 +354,7 @@ def run_prediction(df_path: str, out_dir: str, params_path: str = None):
         df_path: 数据文件路径
         out_dir: 输出目录
         params_path: 参数文件路径（JSON格式），如果为None则从out_dir中查找
+        args: 命令行参数，包含 w_gui, w_code, w_noresp, agent_weight
     """
     import json
 
@@ -389,18 +390,21 @@ def run_prediction(df_path: str, out_dir: str, params_path: str = None):
     with open(params_path, 'r', encoding='utf-8') as f:
         params = json.load(f)
 
+    # 从 args 获取权重参数，如果 args 为 None 则使用默认值
+    w_gui = args.w_gui if args is not None else 1.0
+    w_code = args.w_code if args is not None else 1.2
+    w_noresp = args.w_noresp if args is not None else 0.3
+    agent_weight = args.agent_weight if args is not None else 0.9
+
     # 创建 EM 模型（使用默认配置）
     em = SimpleEM4EvidenceH_Refine(
         max_iter=200,
         tol=1e-4,
         seed=42,
-        w_gui=1.0,
-        w_code=1.2,
-        w_noresp=0.5,
-        # w_gui=0.0,
-        # w_code=0.0,
-        # w_noresp=1.0,
-        agent_weight=0.9,
+        w_gui=w_gui,
+        w_code=w_code,
+        w_noresp=w_noresp,
+        agent_weight=agent_weight,
         a_pi=5.0,
         b_pi=5.0,
         a_c0=3.0,
@@ -424,8 +428,22 @@ def run_prediction(df_path: str, out_dir: str, params_path: str = None):
     pred_step["P_EnvFail"] = post[:, 0]
     pred_step["P_AgentFail"] = post[:, 1]
 
-    pred_correct = correct_cases_with_post(
-        em, df, case_col="test_case_id", margin=0.0, out_dir=out_dir)
+    # pred_correct = correct_cases_with_post(
+    #     em, df, case_col="test_case_id", margin=0.0, out_dir=out_dir)
+    # 从 args 获取 tau 参数，如果 args 为 None 则使用默认值
+    tau_agentfail = args.tau_agentfail if args is not None else 0.75
+    tau_envfail = args.tau_envfail if args is not None else 0.75
+
+    pred_correct = correct_agent_judgment(
+        df,
+        em,
+        tau_agentfail=tau_agentfail,
+        tau_envfail=tau_envfail,
+        tau_envfail_high=tau_envfail,
+        alpha=0.75,
+        col_case="test_case_id",
+        col_agent="agent_testcase_score_x",
+    )
 
     # 保存结果
     out_dir = Path(out_dir)
@@ -449,14 +467,25 @@ if __name__ == "__main__":
     parser.add_argument("--test_path", type=str,
                         default="../train_em_df_webdevjudge_claude_4.xlsx")
     parser.add_argument("--params_path", type=str,
-                        default="em_outputs_refine_webdevjudge/em_params.json")
+                        default="/root/tangjingyu/EM/em_adaptive_learning/src/em_adaptive_learning/em_outputs_refine_webdevjudge_claude_4/em_params.json")
     parser.add_argument("--out_dir", type=str,
-                        default="em_outputs_refine_webdevjudge")
+                        default="em_outputs_refine_webdevjudge_claude_4")
 
     parser.add_argument("--val_ratio", type=float, default=0.4)
     parser.add_argument("--seed", type=int, default=127)
     parser.add_argument("--tau_agentfail", type=float, default=0.75)
     parser.add_argument("--tau_envfail", type=float, default=0.75)
+
+    # EM weight parameters
+    parser.add_argument("--w_gui", type=float, default=1.0,
+                        help="Weight for GUI evidence channel")
+    parser.add_argument("--w_code", type=float, default=1.2,
+                        help="Weight for code evidence channel")
+    parser.add_argument("--w_noresp", type=float, default=0.3,
+                        help="Weight for no-response evidence channel")
+    parser.add_argument("--agent_weight", type=float, default=0.9,
+                        help="Weight for agent judgment")
+
     args = parser.parse_args()
-    # main(args)
-    run_prediction(args.test_path, args.out_dir, args.params_path)
+    main(args)
+    run_prediction(args.test_path, args.out_dir, args.params_path, args)

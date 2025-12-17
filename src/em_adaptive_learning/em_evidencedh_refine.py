@@ -224,7 +224,8 @@ class SimpleEM4EvidenceH_Refine:
         for it in range(self.max_iter):
             T = max(self.temp, 1e-3)
 
-            # ----- E-step -----
+            # ----- E-step (case-level) -----
+            # Step 1: 计算每行的 base_log（gui/code/noresp，考虑 mask）
             base_log = np.zeros((N, 2))
             for d in (0, 1):
                 p_gui, p_cod, p_no = self.theta[d]
@@ -233,37 +234,49 @@ class SimpleEM4EvidenceH_Refine:
                 lc = E[:, 1]*np.log(p_cod+eps) + \
                     (1-E[:, 1])*np.log(1-p_cod+eps)
                 ln = E[:, 2]*np.log(p_no+eps) + (1-E[:, 2])*np.log(1-p_no+eps)
+                # 对 mask=1 的位置，把该通道贡献清空
+                lg[M[:, 0] == 1] = 0.0
+                lc[M[:, 1] == 1] = 0.0
+                ln[M[:, 2] == 1] = 0.0
                 base_log[:, d] = self.w_gui*lg + self.w_code*lc + self.w_no*ln
 
-            # agent channel：按 case-level C_case 映射到每一行
-            agent_log = np.zeros((N, 2))
+            # Step 2: 按 case 求和得到 case_log[k,d]
+            case_log = np.zeros((K, 2))
+            for k in range(K):
+                idx = (inv_case == k)
+                # 可选：加权或不加权，这里用加权求和
+                case_log[k] = (w[idx, None] * base_log[idx]).sum(axis=0)
+
+            # Step 3: agent 通道只对 case 加一次
             if C_case is not None:
-                C_row = C_case[inv_case]  # case 值广播到每行
-                mask = ~np.isnan(C_row)
-                if mask.any():
-                    C_obs = C_row[mask]
+                for k in range(K):
+                    if np.isnan(C_case[k]):
+                        continue
+                    c = C_case[k]
                     for d in (0, 1):
                         psi_d = np.clip(self.psi[d], 1e-4, 1-1e-4)
-                        lr = C_obs*np.log(psi_d) + (1-C_obs)*np.log(1-psi_d)
-                        agent_log[mask, d] = self.agent_weight * lr
+                        case_log[k, d] += self.agent_weight * (
+                            c * np.log(psi_d) + (1 - c) * np.log(1 - psi_d)
+                        )
 
-            log_num = (np.log(self.p_delta+eps)[None, :] +
-                       base_log + agent_log) / T
+            # Step 4: prior + temp + softmax -> resp_case
+            log_num_case = (np.log(self.p_delta + eps)[None, :] + case_log) / T
+            m_case = log_num_case.max(axis=1, keepdims=True)
+            log_den_case = m_case + \
+                np.log(np.exp(log_num_case - m_case).sum(axis=1, keepdims=True) + eps)
+            resp_case = np.exp(log_num_case - log_den_case)  # (K, 2)
 
-            m = log_num.max(axis=1, keepdims=True)
-            log_den = m + \
-                np.log(np.exp(log_num-m).sum(axis=1, keepdims=True)+eps)
-            resp = np.exp(log_num - log_den)  # (N,2)
-
-            # ----- 半监督硬锚 (case-level delta_label) -----
+            # Step 5: 半监督硬锚：对 case 施加
             if not np.all(np.isnan(delta_case)):
                 for k in range(K):
                     if np.isnan(delta_case[k]):
                         continue
                     d = int(delta_case[k])  # 0 or 1
-                    idx = (inv_case == k)
-                    resp[idx, :] = 0.0
-                    resp[idx, d] = 1.0
+                    resp_case[k, :] = 0.0
+                    resp_case[k, d] = 1.0
+
+            # Step 6: 广播回行
+            resp = resp_case[inv_case]  # (N, 2)
 
             # ----- M-step -----
 
@@ -274,16 +287,19 @@ class SimpleEM4EvidenceH_Refine:
             self.p_delta = np.clip(
                 self.p_delta, self.pi_floor, 1.0 - self.pi_floor)
 
-            # (2) θ for gui/code/noresp
+            # (2) θ for gui/code/noresp（只统计未 mask 的位置）
             for d in (0, 1):
                 wk = w * resp[:, d]
                 for j in range(3):
-                    ones = (wk * E[:, j]).sum()
-                    den = wk.sum()
+                    valid = (M[:, j] == 0)  # 只统计未 mask 的位置
+                    wk_valid = wk[valid]
+                    E_valid = E[valid, j]
+                    ones = (wk_valid * E_valid).sum()
+                    den = wk_valid.sum()
                     if den <= 0:
                         p = 0.5
                     else:
-                        # 加一点伪计数偏向 0.5，避免极端
+                        # 加一点伪计数偏向 2，避免极端
                         num_hat = ones + 0.5
                         den_hat = den + 1.0
                         p = num_hat / (den_hat + eps)
@@ -327,15 +343,24 @@ class SimpleEM4EvidenceH_Refine:
                                 0.02, 0.98)
                     )
 
-            # (4) LL convergence
-            avg_ll = float((w * log_den.squeeze()).sum() / (w.sum() + eps))
+            # (4) LL convergence（使用 case-level log-likelihood）
+            # 每个 case 的权重：该 case 内所有行的权重之和
+            w_case = np.zeros(K)
+            for k in range(K):
+                idx = (inv_case == k)
+                w_case[k] = w[idx].sum()
+            avg_ll = float((w_case * log_den_case.squeeze()
+                            ).sum() / (w_case.sum() + eps))
             if abs(avg_ll - ll_prev) < self.tol:
                 break
             ll_prev = avg_ll
 
     # ---------- inference ----------
     def predict_proba(self, df: pd.DataFrame) -> np.ndarray:
-        """返回 step-level P(EnvFail), P(AgentFail)，使用与 fit 一致的 M_* 掩码"""
+        """
+        返回 step-level P(EnvFail), P(AgentFail)
+        内部使用 case-level 聚合证据，然后广播回每行，与 fit 保持一致
+        """
         E, w, M, case_ids, C_raw, _ = self._extract(df)
         N = E.shape[0]
         eps = 1e-9
@@ -353,7 +378,7 @@ class SimpleEM4EvidenceH_Refine:
                 if len(vals):
                     C_case[k] = vals[-1]
 
-        # ---- 基于证据通道 + 掩码的 log-likelihood ----
+        # ---- Step 1: 计算每行的 base_log ----
         base_log = np.zeros((N, 2))
         for d in (0, 1):
             p_gui, p_cod, p_no = self.theta[d]
@@ -362,32 +387,110 @@ class SimpleEM4EvidenceH_Refine:
             lc = E[:, 1]*np.log(p_cod+eps) + (1-E[:, 1])*np.log(1-p_cod+eps)
             ln = E[:, 2]*np.log(p_no+eps) + (1-E[:, 2])*np.log(1-p_no+eps)
 
-            # 关键：对 mask=1 的位置，把该通道贡献清空（忽略该证据）
+            # 对 mask=1 的位置，把该通道贡献清空
             lg[M[:, 0] == 1] = 0.0
             lc[M[:, 1] == 1] = 0.0
             ln[M[:, 2] == 1] = 0.0
 
             base_log[:, d] = self.w_gui*lg + self.w_code*lc + self.w_no*ln
 
-        # ---- agent_testcase_score 通道（case 级）----
-        agent_log = np.zeros((N, 2))
+        # ---- Step 2: 按 case 求和得到 case_log ----
+        case_log = np.zeros((K, 2))
+        for k in range(K):
+            idx = (inv_case == k)
+            case_log[k] = (w[idx, None] * base_log[idx]).sum(axis=0)
+
+        # ---- Step 3: agent 通道只对 case 加一次 ----
         if C_case is not None:
-            C_row = C_case[inv_case]
-            mask = ~np.isnan(C_row)
-            if mask.any():
-                C_obs = C_row[mask]
+            for k in range(K):
+                if np.isnan(C_case[k]):
+                    continue
+                c = C_case[k]
                 for d in (0, 1):
                     psi_d = np.clip(self.psi[d], 1e-4, 1-1e-4)
-                    lr = C_obs*np.log(psi_d) + (1-C_obs)*np.log(1-psi_d)
-                    agent_log[mask, d] = self.agent_weight * lr
+                    case_log[k, d] += self.agent_weight * (
+                        c * np.log(psi_d) + (1 - c) * np.log(1 - psi_d)
+                    )
 
-        # ---- 合成 posterior ----
-        log_num = np.log(self.p_delta+eps)[None, :] + base_log + agent_log
-        m = log_num.max(axis=1, keepdims=True)
-        log_den = m + \
-            np.log(np.exp(log_num-m).sum(axis=1, keepdims=True) + eps)
-        post = np.exp(log_num - log_den)
+        # ---- Step 4: prior + temp + softmax -> resp_case ----
+        T = max(self.temp, 1e-3)
+        log_num_case = (np.log(self.p_delta + eps)[None, :] + case_log) / T
+        m_case = log_num_case.max(axis=1, keepdims=True)
+        log_den_case = m_case + \
+            np.log(np.exp(log_num_case - m_case).sum(axis=1, keepdims=True) + eps)
+        resp_case = np.exp(log_num_case - log_den_case)  # (K, 2)
+
+        # ---- Step 5: 广播回行 ----
+        post = resp_case[inv_case]  # (N, 2)
         return post   # [:,0]=P(EnvFail), [:,1]=P(AgentFail)
+
+    def predict_proba_case(self, df: pd.DataFrame):
+        """
+        返回 case-level posteriors，方便纠偏使用
+        Returns:
+            uniq_case: (K,) unique case IDs
+            resp_case: (K, 2) P(EnvFail), P(AgentFail) for each case
+            C_case: (K,) agent original judgment for each case (may contain NaN)
+        """
+        E, w, M, case_ids, C_raw, _ = self._extract(df)
+        N = E.shape[0]
+        eps = 1e-9
+
+        uniq_case, inv_case = np.unique(case_ids, return_inverse=True)
+        K = len(uniq_case)
+
+        # ---- case 级 C ----
+        C_case = np.full(K, np.nan)
+        if C_raw is not None:
+            for k in range(K):
+                idx = (inv_case == k)
+                vals = C_raw[idx]
+                vals = vals[~np.isnan(vals)]
+                if len(vals):
+                    C_case[k] = vals[-1]
+
+        # ---- Step 1: 计算每行的 base_log ----
+        base_log = np.zeros((N, 2))
+        for d in (0, 1):
+            p_gui, p_cod, p_no = self.theta[d]
+
+            lg = E[:, 0]*np.log(p_gui+eps) + (1-E[:, 0])*np.log(1-p_gui+eps)
+            lc = E[:, 1]*np.log(p_cod+eps) + (1-E[:, 1])*np.log(1-p_cod+eps)
+            ln = E[:, 2]*np.log(p_no+eps) + (1-E[:, 2])*np.log(1-p_no+eps)
+
+            lg[M[:, 0] == 1] = 0.0
+            lc[M[:, 1] == 1] = 0.0
+            ln[M[:, 2] == 1] = 0.0
+
+            base_log[:, d] = self.w_gui*lg + self.w_code*lc + self.w_no*ln
+
+        # ---- Step 2: 按 case 求和 ----
+        case_log = np.zeros((K, 2))
+        for k in range(K):
+            idx = (inv_case == k)
+            case_log[k] = (w[idx, None] * base_log[idx]).sum(axis=0)
+
+        # ---- Step 3: agent 通道 ----
+        if C_case is not None:
+            for k in range(K):
+                if np.isnan(C_case[k]):
+                    continue
+                c = C_case[k]
+                for d in (0, 1):
+                    psi_d = np.clip(self.psi[d], 1e-4, 1-1e-4)
+                    case_log[k, d] += self.agent_weight * (
+                        c * np.log(psi_d) + (1 - c) * np.log(1 - psi_d)
+                    )
+
+        # ---- Step 4: temp + softmax ----
+        T = max(self.temp, 1e-3)
+        log_num_case = (np.log(self.p_delta + eps)[None, :] + case_log) / T
+        m_case = log_num_case.max(axis=1, keepdims=True)
+        log_den_case = m_case + \
+            np.log(np.exp(log_num_case - m_case).sum(axis=1, keepdims=True) + eps)
+        resp_case = np.exp(log_num_case - log_den_case)  # (K, 2)
+
+        return uniq_case, resp_case, C_case
 
     def get_params(self) -> Dict[str, Any]:
         return {
@@ -469,253 +572,15 @@ class SimpleEM4EvidenceH_Refine:
                     lr = C_obs*np.log(psi_d) + (1-C_obs)*np.log(1-psi_d)
                     agent_log[mask, d] = self.agent_weight * lr
 
-        # 计算 log-likelihood
-        log_num = np.log(self.p_delta+eps)[None, :] + base_log + agent_log
+        # 计算 log-likelihood (使用与 fit/predict 一致的温度)
+        T = max(self.temp, 1e-3)
+        log_num = (np.log(self.p_delta+eps)
+                   [None, :] + base_log + agent_log) / T
         m = log_num.max(axis=1, keepdims=True)
         log_den = m + \
             np.log(np.exp(log_num-m).sum(axis=1, keepdims=True) + eps)
 
         return float((w * log_den.squeeze()).sum() / (w.sum() + eps))
-
-
-def analyze_flips(val_df: pd.DataFrame):
-    """区分两类子集: 原判断正确 vs 错误，查看flip比例"""
-    df = val_df.copy()
-    df["is_correct_before"] = (df["human_gt"] == df["agent_original"])
-    df["is_correct_after"] = (df["human_gt"] == df["corrected_label"])
-    df["is_flipped"] = df["agent_original"] != df["corrected_label"]
-
-    # subset A: 原判断正确
-    subset_A = df[df["is_correct_before"]]
-    misflipped = subset_A[subset_A["is_flipped"]]
-    if len(subset_A) > 0:
-        print(f"[Subset A] 原判断正确: {len(subset_A)} cases, "
-              f"被误翻 {len(misflipped)} ({len(misflipped)/len(subset_A):.2%})")
-    else:
-        print(
-            f"[Subset A] 原判断正确: {len(subset_A)} cases, 被误翻 {len(misflipped)}")
-
-    # subset B: 原判断错误
-    subset_B = df[~df["is_correct_before"]]
-    corrected = subset_B[subset_B["is_correct_after"]]
-    if len(subset_B) > 0:
-        print(f"[Subset B] 原判断错误: {len(subset_B)} cases, "
-              f"被成功纠正 {len(corrected)} ({len(corrected)/len(subset_B):.2%})")
-    else:
-        print(
-            f"[Subset B] 原判断错误: {len(subset_B)} cases, 被成功纠正 {len(corrected)}")
-
-    # 再打印最终 confusion
-    print("\n=== Confusion Matrix (GT vs Corrected) ===")
-    print(pd.crosstab(df["human_gt"], df["corrected_label"],
-                      rownames=["GT"], colnames=["Corrected"]))
-
-
-def confusion_matrix(val_df: pd.DataFrame):
-    """统计人类标注 vs 矫正后结果"""
-    conf_matrix = pd.crosstab(val_df["human_gt"], val_df["corrected_label"],
-                              rownames=["GT"], colnames=["Corrected"])
-    print("=== Confusion Matrix (GT vs Corrected) ===")
-    print(conf_matrix)
-    acc = (val_df["human_gt"] == val_df["corrected_label"]).mean()
-    print(f"Accuracy after correction: {acc:.3f}")
-    return conf_matrix
-
-
-def correct_agent_judgment(df: pd.DataFrame,
-                           em: SimpleEM4EvidenceH_Refine,
-                           tau_agentfail: float = 0.7,
-                           tau_envfail: float = 0.7,
-                           alpha: float = 0.75,
-                           tau_envfail_high: float = 0.7,
-                           col_case: str = "test_case_id",
-                           col_agent: str = "agent_testcase_score_x"):
-    """
-    对每个 case：
-      - 汇总 step-level posterior 得到 P_case_AgentFail
-      - 与 agent 原判 (C_case) 结合，给出纠偏动作
-    """
-    post = em.predict_proba(df)
-    df_tmp = df.copy()
-    df_tmp["P_EnvFail"] = post[:, 0]
-    df_tmp["P_AgentFail"] = post[:, 1]
-
-    rows = []
-    for cid, g in df_tmp.groupby(col_case):
-        # agent 原判: 取该 case 最后一个非 nan
-        C_vals = g[col_agent].dropna().values
-        if cid == "web_14_2":
-            print(f"C_vals: {C_vals}")
-        # 1=PASS?, 0=FAIL? 按你现在的定义自行对应
-        C_case = int(C_vals[-1]) if len(C_vals) else None
-
-        gt = g["phi"].dropna().values[-1]
-
-        # 聚合为 case-level AgentFail 概率（阻塞口径）
-        q = np.clip(g["P_AgentFail"].values, 0.0, 1.0)
-        # 阻塞概率: 越多高风险 step, 越趋向 AgentFail
-        P_case_AgentFail = 1.0 - float(np.prod((1.0 - q) ** alpha))
-        P_case_EnvFail = 1.0 - P_case_AgentFail
-
-        action = "keep_AgentJudge"
-        corrected = C_case
-
-        if C_case is not None:
-            # 场景1: agent 判 FAIL (0)，我们要区分 Env vs Agent
-            if C_case == 0:
-                if P_case_AgentFail >= tau_agentfail:
-                    corrected = 1  # 认定 AgentFail
-                    action = "flip_to_AgentFail"
-                elif P_case_EnvFail >= tau_envfail:
-                    corrected = 0  # 环境问题，维持
-                    action = "keep_EnvFail"
-                # 介于两阈值之间可以保守 keep_AgentJudge/UNK
-
-            # 场景2: agent 判 PASS (1)，可选：当强 EnvFail 证据时 flip
-            elif C_case == 1:
-                # 如果你只关心纠正误报，可以先不动这里
-                if P_case_EnvFail >= tau_envfail_high:  # tau_envfail:
-                    corrected = 0
-                    action = "flip_to_EnvFail"
-
-        rows.append(dict(
-            case_id=cid,
-            human_gt=gt,
-            agent_original=C_case,
-            P_case_EnvFail=P_case_EnvFail,
-            P_case_AgentFail=P_case_AgentFail,
-            corrected_label=corrected,
-            action=action
-        ))
-
-    val_df = pd.DataFrame(rows).sort_values("case_id")
-    acc_original = val_df["agent_original"] == val_df["human_gt"]
-    print(f"Accuracy: {acc_original.mean()}")
-
-    acc_correct = val_df["corrected_label"] == val_df["human_gt"]
-    print(f"Accuracy: {acc_correct.mean()}")
-    analyze_flips(val_df)
-    confusion_matrix(val_df)
-    return val_df
-
-
-def analyze_flips(val_df: pd.DataFrame):
-    """区分两类子集: 原判断正确 vs 错误，查看flip比例"""
-    df = val_df.copy()
-    df["is_correct_before"] = (df["human_gt"] == df["agent_original"])
-    df["is_correct_after"] = (df["human_gt"] == df["corrected_label"])
-    df["is_flipped"] = df["agent_original"] != df["corrected_label"]
-
-    # subset A: 原判断正确
-    subset_A = df[df["is_correct_before"]]
-    misflipped = subset_A[subset_A["is_flipped"]]
-    if len(subset_A) > 0:
-        print(f"[Subset A] 原判断正确: {len(subset_A)} cases, "
-              f"被误翻 {len(misflipped)} ({len(misflipped)/len(subset_A):.2%})")
-    else:
-        print(
-            f"[Subset A] 原判断正确: {len(subset_A)} cases, 被误翻 {len(misflipped)}")
-
-    # subset B: 原判断错误
-    subset_B = df[~df["is_correct_before"]]
-    corrected = subset_B[subset_B["is_correct_after"]]
-    if len(subset_B) > 0:
-        print(f"[Subset B] 原判断错误: {len(subset_B)} cases, "
-              f"被成功纠正 {len(corrected)} ({len(corrected)/len(subset_B):.2%})")
-    else:
-        print(
-            f"[Subset B] 原判断错误: {len(subset_B)} cases, 被成功纠正 {len(corrected)}")
-
-    # 再打印最终 confusion
-    print("\n=== Confusion Matrix (GT vs Corrected) ===")
-    print(pd.crosstab(df["human_gt"], df["corrected_label"],
-                      rownames=["GT"], colnames=["Corrected"]))
-
-
-def confusion_matrix(val_df: pd.DataFrame):
-    """统计人类标注 vs 矫正后结果"""
-    conf_matrix = pd.crosstab(val_df["human_gt"], val_df["corrected_label"],
-                              rownames=["GT"], colnames=["Corrected"])
-    print("=== Confusion Matrix (GT vs Corrected) ===")
-    print(conf_matrix)
-    acc = (val_df["human_gt"] == val_df["corrected_label"]).mean()
-    print(f"Accuracy after correction: {acc:.3f}")
-    return conf_matrix
-
-
-def correct_agent_judgment(df: pd.DataFrame,
-                           em: SimpleEM4EvidenceH_Refine,
-                           tau_agentfail: float = 0.7,
-                           tau_envfail: float = 0.7,
-                           alpha: float = 0.75,
-                           tau_envfail_high: float = 0.7,
-                           col_case: str = "test_case_id",
-                           col_agent: str = "agent_testcase_score_x"):
-    """
-    对每个 case：
-      - 汇总 step-level posterior 得到 P_case_AgentFail
-      - 与 agent 原判 (C_case) 结合，给出纠偏动作
-    """
-    post = em.predict_proba(df)
-    df_tmp = df.copy()
-    df_tmp["P_EnvFail"] = post[:, 0]
-    df_tmp["P_AgentFail"] = post[:, 1]
-
-    rows = []
-    for cid, g in df_tmp.groupby(col_case):
-        # agent 原判: 取该 case 最后一个非 nan
-        C_vals = g[col_agent].dropna().values
-        if cid == "web_14_2":
-            print(f"C_vals: {C_vals}")
-        C_case = int(C_vals[-1]) if len(C_vals) else None  # 1=PASS?, 0=FAIL?
-
-        gt = g["phi"].dropna().values[-1]
-
-        # 聚合为 case-level AgentFail 概率（阻塞口径）
-        q = np.clip(g["P_AgentFail"].values, 0.0, 1.0)
-        # 阻塞概率: 越多高风险 step, 越趋向 AgentFail
-        P_case_AgentFail = 1.0 - float(np.prod((1.0 - q) ** alpha))
-        P_case_EnvFail = 1.0 - P_case_AgentFail
-
-        action = "keep_AgentJudge"
-        corrected = C_case
-
-        if C_case is not None:
-            # 场景1: agent 判 FAIL (0)，我们要区分 Env vs Agent
-            if C_case == 0:
-                if P_case_AgentFail >= tau_agentfail:
-                    corrected = 1  # 认定 AgentFail
-                    action = "flip_to_AgentFail"
-                elif P_case_EnvFail >= tau_envfail:
-                    corrected = 0  # 环境问题，维持
-                    action = "keep_EnvFail"
-                # 介于两阈值之间可以保守 keep_AgentJudge/UNK
-
-            # 场景2: agent 判 PASS (1)，可选：当强 EnvFail 证据时 flip
-            elif C_case == 1:
-                # 如果你只关心纠正误报，可以先不动这里
-                if P_case_EnvFail >= tau_envfail_high:  # tau_envfail:
-                    corrected = 0
-                    action = "flip_to_EnvFail"
-
-        rows.append(dict(
-            case_id=cid,
-            human_gt=gt,
-            agent_original=C_case,
-            P_case_EnvFail=P_case_EnvFail,
-            P_case_AgentFail=P_case_AgentFail,
-            corrected_label=corrected,
-            action=action
-        ))
-    val_df = pd.DataFrame(rows).sort_values("case_id")
-    acc_original = val_df["agent_original"] == val_df["human_gt"]
-    print(f"Accuracy: {acc_original.mean()}")
-
-    acc_correct = val_df["corrected_label"] == val_df["human_gt"]
-    print(f"Accuracy: {acc_correct.mean()}")
-    analyze_flips(val_df)
-    confusion_matrix(val_df)
-    return val_df
 
 
 def analyze_flips(val_df: pd.DataFrame, out_dir: Optional[str] = None):
@@ -782,9 +647,51 @@ def analyze_flips(val_df: pd.DataFrame, out_dir: Optional[str] = None):
     # subset B: 原判断错误
     subset_B = df[~df["is_correct_before"]]
     corrected = subset_B[subset_B["is_correct_after"]]
+    not_corrected = subset_B[~subset_B["is_correct_after"]]
     if len(subset_B) > 0:
         print(f"[Subset B] 原判断错误: {len(subset_B)} cases, "
               f"被成功纠正 {len(corrected)} ({len(corrected)/len(subset_B):.2%})")
+
+        # 进一步区分原始标签是0和原始标签是1的情况
+        subset_B_0 = subset_B[subset_B["agent_original"] == 0]
+        subset_B_1 = subset_B[subset_B["agent_original"] == 1]
+        corrected_0 = corrected[corrected["agent_original"] == 0]
+        corrected_1 = corrected[corrected["agent_original"] == 1]
+
+        if len(subset_B_0) > 0:
+            print(f"  - 原始标签=0: {len(subset_B_0)} cases, "
+                  f"被成功纠正 {len(corrected_0)} ({len(corrected_0)/len(subset_B_0):.2%})")
+        if len(subset_B_1) > 0:
+            print(f"  - 原始标签=1: {len(subset_B_1)} cases, "
+                  f"被成功纠正 {len(corrected_1)} ({len(corrected_1)/len(subset_B_1):.2%})")
+
+        # 保存数据
+        if out_dir is not None:
+            out_path = Path(out_dir)
+            out_path.mkdir(parents=True, exist_ok=True)
+
+            # 保存原判断错误的所有数据
+            subset_B.to_csv(out_path / "subset_B.csv", index=False)
+            print(f"  已保存原判断错误数据到: {out_path / 'subset_B.csv'}")
+
+            # 保存被成功纠正的数据（按原始标签分组）
+            if len(corrected_0) > 0:
+                corrected_0.to_csv(
+                    out_path / "subset_B_corrected_original_0.csv", index=False)
+                print(
+                    f"  已保存原始标签=0的成功纠正数据到: {out_path / 'subset_B_corrected_original_0.csv'}")
+            if len(corrected_1) > 0:
+                corrected_1.to_csv(
+                    out_path / "subset_B_corrected_original_1.csv", index=False)
+                print(
+                    f"  已保存原始标签=1的成功纠正数据到: {out_path / 'subset_B_corrected_original_1.csv'}")
+
+            # 保存原判断错误但未被纠正的数据
+            if len(not_corrected) > 0:
+                not_corrected.to_csv(
+                    out_path / "subset_B_not_corrected.csv", index=False)
+                print(
+                    f"  已保存原判断错误但未被纠正数据到: {out_path / 'subset_B_not_corrected.csv'}")
     else:
         print(
             f"[Subset B] 原判断错误: {len(subset_B)} cases, 被成功纠正 {len(corrected)}")
@@ -808,75 +715,215 @@ def confusion_matrix(val_df: pd.DataFrame):
 
 def correct_agent_judgment(df: pd.DataFrame,
                            em: SimpleEM4EvidenceH_Refine,
-                           tau_agentfail: float = 0.7,
-                           tau_envfail: float = 0.7,
-                           alpha: float = 0.75,
+                           margin_agentfail: float = 0.8,
                            tau_envfail_high: float = 0.7,
+                           tau_agentfail_high: float = 0.95,
+                           tau_agentfail_floor: float = 0.65,
+                           tau_support: float = 0.0,
+                           tau_support_pos: float = None,
+                           tau_support_neg: float = None,
+                           min_neg_channels: int = 0,
                            col_case: str = "test_case_id",
-                           col_agent: str = "agent_testcase_score_x"):
+                           col_agent: str = "agent_testcase_score_x",
+                           out_dir: Optional[str] = None):
     """
     对每个 case：
-      - 汇总 step-level posterior 得到 P_case_AgentFail
+      - 直接使用 case-level posterior (resp_case)
       - 与 agent 原判 (C_case) 结合，给出纠偏动作
+
+    0→1 (FAIL→PASS) 纠正规则（以证据为主）：
+      主门槛：evidence_support >= tau_support_pos (硬证据，最靠谱)
+      低保底：P_case_AgentFail >= tau_agentfail_floor (0.65/0.7)
+      保留：logodds >= margin_agentfail
+      三者都满足才翻转
+
+    1→0 (PASS→FAIL) 纠正规则（更严格）：
+      tau_agentfail_high: 用于 1→0 判断中的概率门槛
+      tau_envfail_high: P_case_EnvFail 需要达到的门槛
+      tau_support_neg: 证据支持负向门槛（更严格）
+      min_neg_channels: 多通道一致性要求
+
+    新增"证据差异门槛" tau_support：
+      support_sum = Σ_step Σ_channel valid * w_ch * [log P(E|AgentFail) - log P(E|EnvFail)]
+      support_avg = support_sum / #valid_evidence  (归一化，避免"步数堆票")
+      避免仅靠 prior/psi 或单一弱通道把 posterior 推爆
+
+    非对称纠偏规则（重要！）：
+      - tau_support_pos: 用于 0→1 (FAIL→PASS) 的翻转门槛（硬证据主门槛）
+      - tau_support_neg: 用于 1→0 (PASS→FAIL) 的翻转门槛（更严格）
+      如果不指定，则回退到对称的 tau_support
+
+    多通道一致性（对 1→0 额外保护）：
+      - min_neg_channels: 至少需要多少个通道的证据支持 EnvFail
+        (即 llr_per_channel < 0 的有效通道数 >= min_neg_channels)
     """
-    post = em.predict_proba(df)
-    df_tmp = df.copy()
-    df_tmp["P_EnvFail"] = post[:, 0]
-    df_tmp["P_AgentFail"] = post[:, 1]
+    # 处理非对称门槛参数
+    if tau_support_pos is None:
+        tau_support_pos = tau_support
+    if tau_support_neg is None:
+        tau_support_neg = tau_support
+    eps = 1e-9
+
+    # 直接获取 case-level posteriors
+    uniq_case, resp_case, C_case_arr = em.predict_proba_case(df)
+
+    # ---- 计算每个 case 的证据支持度 (evidence support) ----
+    # support_sum = Σ_step Σ_channel (1-M) * w_ch * [log P(E|AgentFail) - log P(E|EnvFail)]
+    # support_avg = support_sum / #valid_evidence  (归一化，避免步数堆票)
+    E, w, M, case_ids, _, _ = em._extract(df)
+    N = E.shape[0]
+    _, inv_case = np.unique(case_ids, return_inverse=True)
+    K = len(uniq_case)
+
+    # 计算每行每通道的 log-likelihood 差 (AgentFail - EnvFail)
+    # llr[i, j] = log P(E[i,j] | AgentFail) - log P(E[i,j] | EnvFail)
+    channel_weights = np.array([em.w_gui, em.w_code, em.w_no])
+    llr_per_channel = np.zeros((N, 3))  # gui, code, noresp
+    for j in range(3):
+        p_env = em.theta[0, j]
+        p_agent = em.theta[1, j]
+        # log P(E|AgentFail) - log P(E|EnvFail)
+        ll_agent = E[:, j] * np.log(p_agent + eps) + \
+            (1 - E[:, j]) * np.log(1 - p_agent + eps)
+        ll_env = E[:, j] * np.log(p_env + eps) + \
+            (1 - E[:, j]) * np.log(1 - p_env + eps)
+        llr_per_channel[:, j] = ll_agent - ll_env
+
+    # 加权并按 mask 过滤：valid = (1 - M)
+    valid = 1.0 - M  # (N, 3)
+    weighted_llr = valid * channel_weights[None, :] * llr_per_channel  # (N, 3)
+    step_support = weighted_llr.sum(axis=1)  # (N,) 每行的总支持度
+    step_valid_count = valid.sum(axis=1)  # (N,) 每行的有效证据通道数
+
+    # 按 case 聚合，归一化避免"步数堆票"
+    # support_avg = support_sum / #valid_evidence
+    support_case = np.zeros(K)
+    # 多通道一致性：统计每个 case 有多少个有效通道的 llr < 0 (支持 EnvFail)
+    neg_channel_count_case = np.zeros(K, dtype=int)
+    # 每个通道的平均 LLR（用于诊断 misflip 原因）
+    avg_llr_per_channel_case = np.zeros((K, 3))  # [gui, code, noresp]
+
+    for k in range(K):
+        idx = (inv_case == k)
+        support_sum = step_support[idx].sum()
+        valid_evidence_count = step_valid_count[idx].sum()  # 该 case 的总有效证据数
+        if valid_evidence_count > 0:
+            support_case[k] = support_sum / valid_evidence_count  # 归一化
+        else:
+            support_case[k] = 0.0
+
+        # 统计强负通道数（用于多通道一致性检查）
+        # 对该 case 的所有 step，统计每个有效通道的平均 llr，看有多少个通道 < 0
+        case_valid = valid[idx]  # (n_steps, 3)
+        case_llr = llr_per_channel[idx]  # (n_steps, 3)
+        for j in range(3):
+            valid_count_j = case_valid[:, j].sum()
+            if valid_count_j > 0:
+                avg_llr_j = (case_valid[:, j] *
+                             case_llr[:, j]).sum() / valid_count_j
+                avg_llr_per_channel_case[k, j] = avg_llr_j  # 保存每个通道的平均 LLR
+                if avg_llr_j < 0:  # 该通道平均支持 EnvFail
+                    neg_channel_count_case[k] += 1
+            else:
+                avg_llr_per_channel_case[k, j] = np.nan  # 无有效证据
+
+    # 获取每个 case 的 GT (phi)
+    gt_map = {}
+    for cid, g in df.groupby(col_case):
+        gt_vals = g["phi"].dropna().values
+        if len(gt_vals):
+            gt_map[cid] = gt_vals[-1]
+        else:
+            gt_map[cid] = np.nan
 
     rows = []
-    for cid, g in df_tmp.groupby(col_case):
-        # agent 原判: 取该 case 最后一个非 nan
-        C_vals = g[col_agent].dropna().values
-        if cid == "web_14_2":
-            print(f"C_vals: {C_vals}")
-        # 1=PASS?, 0=FAIL? 按你现在的定义自行对应
-        C_case = int(C_vals[-1]) if len(C_vals) else None
+    for k in range(K):
+        cid = uniq_case[k]
+        P_case_EnvFail = resp_case[k, 0]
+        P_case_AgentFail = resp_case[k, 1]
+        C_case = C_case_arr[k]
+        case_support = support_case[k]  # 该 case 的证据支持度
 
-        gt = g["phi"].dropna().values[-1]
+        # agent 原判
+        if np.isnan(C_case):
+            C_case_int = None
+        else:
+            C_case_int = int(C_case)
 
-        # 聚合为 case-level AgentFail 概率（阻塞口径）
-        q = np.clip(g["P_AgentFail"].values, 0.0, 1.0)
-        # 阻塞概率: 越多高风险 step, 越趋向 AgentFail
-        P_case_AgentFail = 1.0 - float(np.prod((1.0 - q) ** alpha))
-        P_case_EnvFail = 1.0 - P_case_AgentFail
+        gt = gt_map.get(cid, np.nan)
 
         action = "keep_AgentJudge"
-        corrected = C_case
+        corrected = C_case_int
 
-        if C_case is not None:
-            # 场景1: agent 判 FAIL (0)，我们要区分 Env vs Agent
-            if C_case == 0:
-                if P_case_AgentFail >= tau_agentfail:
-                    corrected = 1  # 认定 AgentFail
+        # 获取该 case 的强负通道数
+        neg_channels = neg_channel_count_case[k]
+
+        if C_case_int is not None:
+            # 场景1: agent 判 FAIL (0) → 可能翻转为 PASS (1)
+            # 以证据为主的三门槛规则：
+            #   主门槛：evidence_support >= tau_support_pos (硬证据，最靠谱)
+            #   低保底：P_case_AgentFail >= tau_agentfail_floor (0.65/0.7)
+            #   保留：logodds >= margin_agentfail
+            if C_case_int == 0:
+                # log-odds = log(P_AgentFail) - log(P_EnvFail)
+                logodds = np.log(P_case_AgentFail + eps) - \
+                    np.log(P_case_EnvFail + eps)
+                # 0→1 翻转：主门槛是证据，P_case_AgentFail 只是低保底
+                if (logodds >= margin_agentfail and
+                    P_case_AgentFail >= tau_agentfail_floor and
+                        case_support >= tau_support_pos):
+                    corrected = 1  # 认定 AgentFail，翻转
                     action = "flip_to_AgentFail"
-                elif P_case_EnvFail >= tau_envfail:
-                    corrected = 0  # 环境问题，维持
+                else:
+                    corrected = 0  # 环境问题或不确定，维持
                     action = "keep_EnvFail"
-                # 介于两阈值之间可以保守 keep_AgentJudge/UNK
 
-            # 场景2: agent 判 PASS (1)，可选：当强 EnvFail 证据时 flip
-            elif C_case == 1:
-                # 如果你只关心纠正误报，可以先不动这里
-                if P_case_EnvFail >= tau_envfail_high:  # tau_envfail:
+            # 场景2: agent 判 PASS (1) → 可能翻转为 FAIL (0)
+            # 1→0 翻转代价更大，需要更严格的条件：
+            #   - P_case_EnvFail >= tau_envfail_high
+            #   - case_support <= -tau_support_neg（更严格的负向支持）
+            #   - 多通道一致性：至少 min_neg_channels 个通道支持 EnvFail
+            elif C_case_int == 1:
+                # 对于 EnvFail 方向的翻转，support 应为负值（支持 EnvFail）
+                # 使用 -tau_support_neg 作为门槛（更严格）
+                support_ok = (case_support <= -tau_support_neg)
+                channel_ok = (neg_channels >= min_neg_channels)
+
+                if P_case_EnvFail >= tau_envfail_high and support_ok and channel_ok:
                     corrected = 0
                     action = "flip_to_EnvFail"
+
+        # 获取该 case 每个通道的平均 LLR
+        avg_llr_gui = avg_llr_per_channel_case[k, 0]
+        avg_llr_code = avg_llr_per_channel_case[k, 1]
+        avg_llr_noresp = avg_llr_per_channel_case[k, 2]
 
         rows.append(dict(
             case_id=cid,
             human_gt=gt,
-            agent_original=C_case,
-            P_case_EnvFail=P_case_EnvFail,
-            P_case_AgentFail=P_case_AgentFail,
+            agent_original=C_case_int,
+            P_case_EnvFail=float(P_case_EnvFail),
+            P_case_AgentFail=float(P_case_AgentFail),
+            logodds=float(np.log(P_case_AgentFail + eps) -
+                          np.log(P_case_EnvFail + eps)),
+            evidence_support=float(case_support),  # 证据支持度
+            neg_channels=int(neg_channels),  # 支持 EnvFail 的通道数
+            avg_llr_gui=float(avg_llr_gui) if not np.isnan(
+                avg_llr_gui) else None,
+            avg_llr_code=float(avg_llr_code) if not np.isnan(
+                avg_llr_code) else None,
+            avg_llr_noresp=float(avg_llr_noresp) if not np.isnan(
+                avg_llr_noresp) else None,
             corrected_label=corrected,
             action=action
         ))
+
     val_df = pd.DataFrame(rows).sort_values("case_id")
     acc_original = val_df["agent_original"] == val_df["human_gt"]
     print(f"Accuracy: {acc_original.mean()}")
 
     acc_correct = val_df["corrected_label"] == val_df["human_gt"]
     print(f"Accuracy: {acc_correct.mean()}")
-    analyze_flips(val_df)
+    analyze_flips(val_df, out_dir=out_dir)
     confusion_matrix(val_df)
     return val_df

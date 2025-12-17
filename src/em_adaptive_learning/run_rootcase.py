@@ -131,21 +131,6 @@ def main(args):
           f"val={val_df['test_case_id'].nunique()}")
     print(f"#rows  train={len(train_df)}, val={len(val_df)}")
 
-    # ===== 统计训练集中 delta_label_updated 的频率 =====
-    if "delta_label_updated" in train_df.columns:
-        delta_freq = train_df["delta_label_updated"].value_counts(
-            dropna=False).sort_index()
-        print("\n训练集中 delta_label_updated 的频率:")
-        print(delta_freq)
-        print(f"总计: {len(train_df)} 行")
-        if len(delta_freq) > 0:
-            print(f"比例:")
-            for val, count in delta_freq.items():
-                pct = count / len(train_df) * 100
-                print(f"  {val}: {count} ({pct:.2f}%)")
-    else:
-        print("\n警告: 训练集中没有 delta_label_updated 列")
-
     # ===== 训练 refine 版 EM =====
     em = SimpleEM4EvidenceH_Refine(
         max_iter=500,
@@ -193,24 +178,23 @@ def main(args):
     val_post = em.predict_proba(val_df)
     val_pred_step = val_df[["test_case_id", "step"]].copy()
     val_pred_step["P_EnvFail"] = val_post[:, 0]
-    val_pred_step["P_AgentFail"] = val_post[:, 1] + \
-        val_post[:, 2]  # 合并AgentRetryFail和AgentReasoningFail
+    val_pred_step["P_AgentFail"] = val_post[:, 1]
     print("val_pred_step sample:")
 
     # ===== 基于 posterior 对 agent 判决做纠偏建议 =====
-    # val_correct = correct_agent_judgment(
-    #     val_df,
-    #     em,
-    #     tau_agentfail=args.tau_agentfail,
-    #     tau_envfail=args.tau_envfail,
-    #     tau_envfail_high=args.tau_envfail,
-    #     alpha=0.75,
-    #     col_case="test_case_id",
-    #     col_agent="agent_testcase_score_x",
-    # )
+    val_correct = correct_agent_judgment(
+        val_df,
+        em,
+        tau_agentfail=args.tau_agentfail,
+        tau_envfail=args.tau_envfail,
+        tau_envfail_high=args.tau_envfail,
+        alpha=0.75,
+        col_case="test_case_id",
+        col_agent="agent_testcase_score_x",
+    )
 
     val_correct = correct_cases_with_post(
-        em, val_df, case_col="test_case_id", margin=0.0, out_dir=str(out_dir), data_dir="data")
+        em, val_df, case_col="test_case_id", margin=0.0, out_dir=str(out_dir))
 
     # 保存输出
     val_pred_step.to_csv(out_dir / "val_pred_step.csv", index=False)
@@ -270,13 +254,9 @@ def aggregate_case_posteriors(em, df, case_col="test_case_id"):
             vals = g["agent_testcase_score"].dropna().values
             if len(vals) > 0:
                 C_case = 1.0 if vals[-1] >= 0.5 else 0.0
-        elif "agent_testcase_score_x" in g.columns:
-            vals = g["agent_testcase_score_x"].dropna().values
-            if len(vals) > 0:
-                C_case = 1.0 if vals[-1] >= 0.5 else 0.0
 
         if C_case is not None:
-            for d in range(D):
+            for d in (0, 1):
                 psi_d = float(em.psi[d])
                 if C_case == 1.0:
                     log_like[d] += np.log(psi_d + eps)
@@ -288,23 +268,18 @@ def aggregate_case_posteriors(em, df, case_col="test_case_id"):
         m = log_post.max()
         post = np.exp(log_post - m)
         post = post / post.sum()
-        P_env = float(post[0])
-        P_retry = float(post[1]) if D > 1 else 0.0
-        P_reasoning = float(post[2]) if D > 2 else 0.0
-        P_agent = P_retry + P_reasoning  # 保持向后兼容
+        P_env, P_agent = float(post[0]), float(post[1])
 
         rows.append(dict(
             case_id=cid,
             P_case_EnvFail=P_env,
-            P_case_AgentRetryFail=P_retry,
-            P_case_AgentReasoningFail=P_reasoning,
             P_case_AgentFail=P_agent
         ))
 
     return pd.DataFrame(rows)
 
 
-def correct_cases_with_post(em, df, case_col="test_case_id", margin=0.0, out_dir=None, data_dir="data"):
+def correct_cases_with_post(em, df, case_col="test_case_id", margin=0.0, out_dir=None):
     case_probs = aggregate_case_posteriors(em, df, case_col)
 
     # 拿到每个 case 的 agent 原始判定（最后一条）
@@ -324,23 +299,10 @@ def correct_cases_with_post(em, df, case_col="test_case_id", margin=0.0, out_dir
         cid = r["case_id"]
         C_case = r["agent_original"]  # 0/1 or NaN
         P_env = r["P_case_EnvFail"]
-        P_retry = r.get("P_case_AgentRetryFail", 0.0)
-        P_reasoning = r.get("P_case_AgentReasoningFail", 0.0)
         P_agent = r["P_case_AgentFail"]
 
         if cid == "web_0_5":
-            print(
-                f"C_case: {C_case}, P_env: {P_env}, P_retry: {P_retry}, P_reasoning: {P_reasoning}, P_agent: {P_agent}")
-
-        # 确定失败类型
-        agent_fail_type = None
-        if P_agent > P_env + margin:
-            # 区分是 retry fail 还是 reasoning fail
-            if P_retry > P_reasoning:
-                agent_fail_type = "AgentRetryFail"
-            else:
-                agent_fail_type = "AgentReasoningFail"
-
+            print(f"C_case: {C_case}, P_env: {P_env}, P_agent: {P_agent}")
         if np.isnan(C_case):
             # 没原判定：直接用 argmax
             corrected = 1 if P_agent >= P_env else 0
@@ -349,10 +311,7 @@ def correct_cases_with_post(em, df, case_col="test_case_id", margin=0.0, out_dir
             # agent 说 FAIL：区分 EnvFail vs AgentFail
             if P_agent > P_env + margin:
                 corrected = 1
-                if agent_fail_type == "AgentRetryFail":
-                    action = "flip_to_AgentRetryFail"
-                else:
-                    action = "flip_to_AgentReasoningFail"
+                action = "flip_to_AgentFail"
             else:
                 corrected = 0
                 action = "keep_EnvFail_or_AgentFail"
@@ -370,12 +329,9 @@ def correct_cases_with_post(em, df, case_col="test_case_id", margin=0.0, out_dir
             human_gt=df[df["test_case_id"] == cid]["phi"].dropna().values[-1],
             agent_original=C_case,
             P_case_EnvFail=P_env,
-            P_case_AgentRetryFail=P_retry,
-            P_case_AgentReasoningFail=P_reasoning,
             P_case_AgentFail=P_agent,
             corrected_label=corrected,
             action=action,
-            agent_fail_type=agent_fail_type,
         ))
 
     val_df = pd.DataFrame(rows).sort_values("case_id")
@@ -402,10 +358,7 @@ def run_prediction(df_path: str, out_dir: str, params_path: str = None):
     import json
 
     # 加载数据
-    print(f"=== Loading data from: {df_path} ===")
     df = load_data(df_path)
-    print(
-        f"=== Loaded {len(df)} rows, {df['test_case_id'].nunique()} cases ===")
     # df["M_code"] = 1.0
     print(df.shape)
     # 确保必要的列存在
@@ -472,7 +425,7 @@ def run_prediction(df_path: str, out_dir: str, params_path: str = None):
     pred_step["P_AgentFail"] = post[:, 1]
 
     pred_correct = correct_cases_with_post(
-        em, df, case_col="test_case_id", margin=0.0, out_dir=out_dir, data_dir="data")
+        em, df, case_col="test_case_id", margin=0.0, out_dir=out_dir)
 
     # 保存结果
     out_dir = Path(out_dir)
@@ -492,13 +445,11 @@ def run_prediction(df_path: str, out_dir: str, params_path: str = None):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--data_path", type=str,
-                        default="train_em_df_labeled.xlsx")
-    # parser.add_argument("--test_path", type=str,
-    #                     default="/root/tangjingyu/EM/em_adaptive_learning/src/train_em_df_webdevjudge_ui_tars.xlsx")
+                        default="../train_em_df_webdevjudge_claude_4.xlsx")
     parser.add_argument("--test_path", type=str,
-                        default="/root/tangjingyu/EM/em_adaptive_learning/src/train_em_df_webdevjudge_claude_4.xlsx")
+                        default="../train_em_df_webdevjudge_claude_4.xlsx")
     parser.add_argument("--params_path", type=str,
-                        default="/root/tangjingyu/EM/em_adaptive_learning/src/em_adaptive_learning/param/em_params.json")
+                        default="em_outputs_refine_webdevjudge/em_params.json")
     parser.add_argument("--out_dir", type=str,
                         default="em_outputs_refine_webdevjudge")
 

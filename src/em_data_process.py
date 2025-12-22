@@ -216,11 +216,17 @@ def convert_to_train_data(merged_df, label_col="gt_x", gt_file_path=None):
 
             gt_value = gt_dict.get(lookup_key)
             if gt_value is not None and not pd.isna(agent_testcase_score_val):
-                # 比较 GT_value 和 agent_judge_x
-                # 相同则 delta_label = 0，不同则 delta_label = 1
+                # 标注逻辑：
+                # - gt=1 且 agent_score=0 → delta_label=1
+                # - gt=0 且 agent_score=1 → delta_label=0
+                # - 其他情况不标注（保持 np.nan）
                 logger.info(
                     f"gt_value: {gt_value}, agent_score: {agent_testcase_score_val}")
-                delta_label = 0 if gt_value == agent_testcase_score_val else 1
+                if gt_value == 1 and agent_testcase_score_val == 0:
+                    delta_label = 1
+                elif gt_value == 0 and agent_testcase_score_val == 1:
+                    delta_label = 0
+                # 其他情况 delta_label 保持默认值 np.nan
 
         rows_out.append({
             "test_case_id": row['test_case_id_x'],

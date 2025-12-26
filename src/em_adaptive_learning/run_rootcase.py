@@ -37,12 +37,6 @@ def make_train_val_split(df: pd.DataFrame,
 def aggregate_case_posterior(em, df_case):
     eps = 1e-9
 
-    # 获取 EM 的通道权重（与训练阶段保持一致）
-    w_gui = getattr(em, 'w_gui', 1.0)
-    w_code = getattr(em, 'w_code', 1.0)
-    w_no = getattr(em, 'w_no', 0.5)
-    agent_weight = getattr(em, 'agent_weight', 1.0)
-
     # 1) 基于 step-level 证据的 log-likelihood
     log_like = np.zeros(2)  # [EnvFail, AgentFail]
     for _, r in df_case.iterrows():
@@ -54,16 +48,13 @@ def aggregate_case_posterior(em, df_case):
             # 只对未 mask 的通道计入；你数据里的 M_* 已经控制好哪些步看哪些证据
             if r["M_gui"] == 0:
                 e = r["E1_gui"]
-                log_p_gui = np.log((p_gui if e == 1 else 1-p_gui) + eps)
-                log_like[d] += w_gui * log_p_gui
+                log_like[d] += np.log((p_gui if e == 1 else 1-p_gui) + eps)
             if r["M_code"] == 0:
                 e = r["E2_code"]
-                log_p_code = np.log((p_code if e == 1 else 1-p_code) + eps)
-                log_like[d] += w_code * log_p_code
+                log_like[d] += np.log((p_code if e == 1 else 1-p_code) + eps)
             if r["M_noresp"] == 0:
                 e = r["E4_noresp"]
-                log_p_no = np.log((p_no if e == 1 else 1-p_no) + eps)
-                log_like[d] += w_no * log_p_no
+                log_like[d] += np.log((p_no if e == 1 else 1-p_no) + eps)
 
     # 2) C_case 通道 (用 EM 学出来的 psi)
     C_vals = df_case["agent_testcase_score_x"].dropna().values
@@ -71,8 +62,9 @@ def aggregate_case_posterior(em, df_case):
         C_case = 1.0 if C_vals[-1] >= 0.5 else 0.0
         for d in (0, 1):
             psi_d = em.psi[d]
-            log_p_agent = np.log((psi_d if C_case == 1 else 1-psi_d) + eps)
-            log_like[d] += agent_weight * log_p_agent
+            log_like[d] += np.log(
+                (psi_d if C_case == 1 else 1-psi_d) + eps
+            )
 
     # 3) 加上 prior P_delta，归一化成 posterior
     log_post = np.log(em.p_delta + eps) + log_like
@@ -84,19 +76,23 @@ def aggregate_case_posterior(em, df_case):
 
 
 def aggregate_case_probs(df: pd.DataFrame,
-                         post: np.ndarray = None,
+                         post: np.ndarray,
                          case_col: str = "test_case_id",
                          alpha: float = 0.75,
                          reflect_weight: float = 2.0,
                          em: SimpleEM4EvidenceH_Refine = None) -> pd.DataFrame:
-    """把 step-level posterior 聚合到 case-level
+    """把 step-level posterior 聚合到 case-level"""
+    tmp = df.copy()
+    p_env, p_agent = aggregate_case_posterior(em, tmp)
 
-    修复：按 case 循环调用 aggregate_case_posterior，而不是对整个 df 算一次
-    """
+    tmp["P_EnvFail"] = p_env
+    tmp["P_AgentFail"] = p_agent
+
     rows = []
-    for cid, g in df.groupby(case_col):
-        # 为每个 case 单独计算 posterior
-        P_case_EnvFail, P_case_AgentFail = aggregate_case_posterior(em, g)
+    for cid, g in tmp.groupby(case_col):
+        q = np.clip(g["P_AgentFail"].values, 0.0, 1.0)
+        P_case_AgentFail = 1.0 - float(np.prod((1.0 - q) ** alpha))
+        P_case_EnvFail = 1.0 - P_case_AgentFail
         rows.append(dict(
             case_id=cid,
             P_case_EnvFail=P_case_EnvFail,
@@ -153,7 +149,7 @@ def main(args):
         theta_floor=0.05,
         theta_ceil=0.95,
         pi_floor=0.02,
-        temp=args.temp,
+        temp=0.8,
     )
 
     em.fit(
@@ -189,17 +185,12 @@ def main(args):
     val_correct = correct_agent_judgment(
         val_df,
         em,
-        margin_agentfail=args.margin_agentfail,
-        tau_envfail_high=args.tau_envfail_high,
-        tau_agentfail_high=args.tau_agentfail_high,
-        tau_agentfail_floor=args.tau_agentfail_floor,
-        tau_support=args.tau_support,
-        tau_support_pos=args.tau_support_pos,
-        tau_support_neg=args.tau_support_neg,
-        min_neg_channels=args.min_neg_channels,
+        tau_agentfail=args.tau_agentfail,
+        tau_envfail=args.tau_envfail,
+        tau_envfail_high=args.tau_envfail,
+        alpha=0.75,
         col_case="test_case_id",
         col_agent="agent_testcase_score_x",
-        out_dir=str(out_dir),
     )
 
     # val_correct = correct_cases_with_post(
@@ -223,12 +214,6 @@ def aggregate_case_posteriors(em, df, case_col="test_case_id"):
     rows = []
     D = em.p_delta.shape[0]
 
-    # 获取 EM 的通道权重（与训练阶段保持一致）
-    w_gui = getattr(em, 'w_gui', 1.0)
-    w_code = getattr(em, 'w_code', 1.0)
-    w_no = getattr(em, 'w_no', 0.5)
-    agent_weight = getattr(em, 'agent_weight', 1.0)
-
     for cid, g in df.groupby(case_col):
         if cid == "web_0_5":
             print(f"cid: {cid}")
@@ -245,25 +230,23 @@ def aggregate_case_posteriors(em, df, case_col="test_case_id"):
                 p_code = em.theta[d, 1]
                 p_no = em.theta[d, 2]
 
-                # gui 通道（乘权重 w_gui）
+                # gui 通道
                 if ("M_gui" not in g.columns) or (r["M_gui"] == 0):
                     e = float(r["E1_gui"])
-                    log_p_gui = np.log(
-                        (p_gui if e == 1.0 else 1 - p_gui) + eps)
-                    log_like[d] += w_gui * log_p_gui
+                    log_like[d] += np.log((p_gui if e ==
+                                          1.0 else 1 - p_gui) + eps)
 
-                # code 通道（乘权重 w_code）
+                # code 通道
                 if ("M_code" not in g.columns) or (r["M_code"] == 0):
                     e = float(r["E2_code"])
-                    log_p_code = np.log(
-                        (p_code if e == 1.0 else 1 - p_code) + eps)
-                    log_like[d] += w_code * log_p_code
+                    log_like[d] += np.log((p_code if e ==
+                                          1.0 else 1 - p_code) + eps)
 
-                # noresp 通道（乘权重 w_no）
+                # noresp 通道
                 if ("M_noresp" not in g.columns) or (r["M_noresp"] == 0):
                     e = float(r["E4_noresp"])
-                    log_p_no = np.log((p_no if e == 1.0 else 1 - p_no) + eps)
-                    log_like[d] += w_no * log_p_no
+                    log_like[d] += np.log((p_no if e ==
+                                          1.0 else 1 - p_no) + eps)
 
         # 2) agent_testcase_score 作为 C_case 通道
         C_case = None
@@ -276,10 +259,9 @@ def aggregate_case_posteriors(em, df, case_col="test_case_id"):
             for d in (0, 1):
                 psi_d = float(em.psi[d])
                 if C_case == 1.0:
-                    log_p_agent = np.log(psi_d + eps)
+                    log_like[d] += np.log(psi_d + eps)
                 else:
-                    log_p_agent = np.log(1 - psi_d + eps)
-                log_like[d] += agent_weight * log_p_agent
+                    log_like[d] += np.log(1 - psi_d + eps)
 
         # 3) prior + 归一化 → posterior
         log_post = np.log(em.p_delta + eps) + log_like
@@ -293,6 +275,73 @@ def aggregate_case_posteriors(em, df, case_col="test_case_id"):
             P_case_EnvFail=P_env,
             P_case_AgentFail=P_agent
         ))
+
+    return pd.DataFrame(rows)
+
+
+def correct_cases_with_post(em, df, case_col="test_case_id", margin=0.0, out_dir=None):
+    case_probs = aggregate_case_posteriors(em, df, case_col)
+
+    # 拿到每个 case 的 agent 原始判定（最后一条）
+    agent_orig = (df
+                  .sort_index()
+                  .groupby(case_col)["agent_testcase_score_x"]
+                  .last()
+                  .rename("agent_original"))
+
+    out = (case_probs
+           .set_index("case_id")
+           .join(agent_orig)
+           .reset_index())
+
+    rows = []
+    for _, r in out.iterrows():
+        cid = r["case_id"]
+        C_case = r["agent_original"]  # 0/1 or NaN
+        P_env = r["P_case_EnvFail"]
+        P_agent = r["P_case_AgentFail"]
+
+        if cid == "web_0_5":
+            print(f"C_case: {C_case}, P_env: {P_env}, P_agent: {P_agent}")
+        if np.isnan(C_case):
+            # 没原判定：直接用 argmax
+            corrected = 1 if P_agent >= P_env else 0
+            action = "from_model"
+        elif C_case == 0:
+            # agent 说 FAIL：区分 EnvFail vs AgentFail
+            if P_agent > P_env + margin:
+                corrected = 1
+                action = "flip_to_AgentFail"
+            else:
+                corrected = 0
+                action = "keep_EnvFail_or_AgentFail"
+        else:  # C_case == 1, agent 说 PASS
+            # 只在强 EnvFail 证据下翻转
+            if P_env > P_agent + margin:
+                corrected = 0
+                action = "flip_to_EnvFail"
+            else:
+                corrected = 1
+                action = "keep_AgentJudge"
+
+        rows.append(dict(
+            case_id=cid,
+            human_gt=df[df["test_case_id"] == cid]["phi"].dropna().values[-1],
+            agent_original=C_case,
+            P_case_EnvFail=P_env,
+            P_case_AgentFail=P_agent,
+            corrected_label=corrected,
+            action=action,
+        ))
+
+    val_df = pd.DataFrame(rows).sort_values("case_id")
+    acc_original = val_df["agent_original"] == val_df["human_gt"]
+    print(f"Accuracy: {acc_original.mean()}")
+
+    acc_correct = val_df["corrected_label"] == val_df["human_gt"]
+    print(f"Accuracy: {acc_correct.mean()}")
+    analyze_flips(val_df, out_dir=out_dir)
+    confusion_matrix(val_df)
 
     return pd.DataFrame(rows)
 
@@ -346,7 +395,6 @@ def run_prediction(df_path: str, out_dir: str, params_path: str = None, args=Non
     w_code = args.w_code if args is not None else 1.2
     w_noresp = args.w_noresp if args is not None else 0.3
     agent_weight = args.agent_weight if args is not None else 0.9
-    temp = args.temp if args is not None else 1.0
 
     # 创建 EM 模型（使用默认配置）
     em = SimpleEM4EvidenceH_Refine(
@@ -366,7 +414,7 @@ def run_prediction(df_path: str, out_dir: str, params_path: str = None, args=Non
         theta_floor=0.05,
         theta_ceil=0.95,
         pi_floor=0.02,
-        temp=temp,
+        temp=0.8,
     )
 
     # 加载已有参数
@@ -382,34 +430,19 @@ def run_prediction(df_path: str, out_dir: str, params_path: str = None, args=Non
 
     # pred_correct = correct_cases_with_post(
     #     em, df, case_col="test_case_id", margin=0.0, out_dir=out_dir)
-    # 从 args 获取参数，如果 args 为 None 则使用默认值
-    margin_agentfail = args.margin_agentfail if args is not None else 0.8
-    tau_envfail_high = args.tau_envfail_high if args is not None else 0.7
-    tau_agentfail_high = args.tau_agentfail_high if args is not None else 0.95
-    tau_agentfail_floor = getattr(
-        args, 'tau_agentfail_floor', 0.65) if args is not None else 0.65
-    tau_support = args.tau_support if args is not None else 0.0
-    tau_support_pos = getattr(args, 'tau_support_pos',
-                              None) if args is not None else None
-    tau_support_neg = getattr(args, 'tau_support_neg',
-                              None) if args is not None else None
-    min_neg_channels = getattr(
-        args, 'min_neg_channels', 0) if args is not None else 0
+    # 从 args 获取 tau 参数，如果 args 为 None 则使用默认值
+    tau_agentfail = args.tau_agentfail if args is not None else 0.75
+    tau_envfail = args.tau_envfail if args is not None else 0.75
 
     pred_correct = correct_agent_judgment(
         df,
         em,
-        margin_agentfail=margin_agentfail,
-        tau_envfail_high=tau_envfail_high,
-        tau_agentfail_high=tau_agentfail_high,
-        tau_agentfail_floor=tau_agentfail_floor,
-        tau_support=tau_support,
-        tau_support_pos=tau_support_pos,
-        tau_support_neg=tau_support_neg,
-        min_neg_channels=min_neg_channels,
+        tau_agentfail=tau_agentfail,
+        tau_envfail=tau_envfail,
+        tau_envfail_high=tau_envfail,
+        alpha=0.75,
         col_case="test_case_id",
         col_agent="agent_testcase_score_x",
-        out_dir=str(out_dir),
     )
 
     # 保存结果
@@ -430,44 +463,28 @@ def run_prediction(df_path: str, out_dir: str, params_path: str = None, args=Non
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--data_path", type=str,
-                        default="../train_em_df_webdevjudge_claude_4.xlsx")
+                        default="../train_em_df_webdevjudge_claude_4_train.xlsx")
     parser.add_argument("--test_path", type=str,
-                        default="../train_em_df_webdevjudge_claude_4.xlsx")
+                        default="../train_em_df_webdevjudge_claude_4_test.xlsx")
     parser.add_argument("--params_path", type=str,
                         default="/root/tangjingyu/EM/em_adaptive_learning/src/em_adaptive_learning/em_outputs_refine_webdevjudge_claude_4/em_params.json")
     parser.add_argument("--out_dir", type=str,
                         default="em_outputs_refine_webdevjudge_claude_4")
 
-    parser.add_argument("--val_ratio", type=float, default=0.25)
+    parser.add_argument("--val_ratio", type=float, default=0.4)
     parser.add_argument("--seed", type=int, default=127)
-    parser.add_argument("--margin_agentfail", type=float, default=0.25,
-                        help="Log-odds margin for flipping to AgentFail (recommended: 0.6-1.0)")
-    parser.add_argument("--tau_envfail_high", type=float, default=0.72,
-                        help="Threshold for flipping PASS to EnvFail")
-    parser.add_argument("--tau_agentfail_high", type=float, default=1.0,
-                        help="Second threshold for P_case_AgentFail when flipping to AgentFail (双门槛)")
-    parser.add_argument("--tau_agentfail_floor", type=float, default=0.55,
-                        help="Floor threshold for P_case_AgentFail in 0->1 flip (低保底，主门槛是 tau_support_pos)")
-    parser.add_argument("--tau_support", type=float, default=0.0,
-                        help="Evidence support threshold: requires avg of log-likelihood ratios >= tau_support to flip (归一化证据差异门槛，避免步数堆票)")
-    parser.add_argument("--tau_support_pos", type=float, default=0.23,
-                        help="Evidence support threshold for 0->1 (FAIL->PASS) flip, 相对宽松. If None, uses tau_support")
-    parser.add_argument("--tau_support_neg", type=float, default=0.2,
-                        help="Evidence support threshold for 1->0 (PASS->FAIL) flip, 更严格. If None, uses tau_support")
-    parser.add_argument("--min_neg_channels", type=int, default=1,
-                        help="Minimum number of channels supporting EnvFail for 1->0 flip (多通道一致性). 0 disables this check")
+    parser.add_argument("--tau_agentfail", type=float, default=0.75)
+    parser.add_argument("--tau_envfail", type=float, default=0.75)
 
     # EM weight parameters
-    parser.add_argument("--w_gui", type=float, default=0.8,
+    parser.add_argument("--w_gui", type=float, default=1.0,
                         help="Weight for GUI evidence channel")
-    parser.add_argument("--w_code", type=float, default=1.0,
+    parser.add_argument("--w_code", type=float, default=1.2,
                         help="Weight for code evidence channel")
-    parser.add_argument("--w_noresp", type=float, default=0.05,
+    parser.add_argument("--w_noresp", type=float, default=0.3,
                         help="Weight for no-response evidence channel")
-    parser.add_argument("--agent_weight", type=float, default=0.2,
+    parser.add_argument("--agent_weight", type=float, default=0.9,
                         help="Weight for agent judgment")
-    parser.add_argument("--temp", type=float, default=1.0,
-                        help="Temperature for softmax (1.0/1.2/1.5)")
 
     args = parser.parse_args()
     main(args)

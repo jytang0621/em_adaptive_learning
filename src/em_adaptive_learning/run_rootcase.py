@@ -120,16 +120,19 @@ def main(args):
     if "delta_label_updated" in df.columns:
         df["delta_label"] = df["delta_label_updated"]
 
-    train_df, val_df = make_train_val_split(
-        df,
-        case_col="test_case_id",
-        val_ratio=args.val_ratio,
-        seed=args.seed,
-    )
+    # train_df, val_df = make_train_val_split(
+    #     df,
+    #     case_col="test_case_id",
+    #     val_ratio=args.val_ratio,
+    #     seed=args.seed,
+    # )
 
-    print(f"#cases train={train_df['test_case_id'].nunique()}, "
-          f"val={val_df['test_case_id'].nunique()}")
-    print(f"#rows  train={len(train_df)}, val={len(val_df)}")
+    # print(f"#cases train={train_df['test_case_id'].nunique()}, "
+    #       f"val={val_df['test_case_id'].nunique()}")
+    # print(f"#rows  train={len(train_df)}, val={len(val_df)}")
+
+    # 使用全部数据进行训练
+    train_df = df
 
     # ===== 训练 refine 版 EM =====
     em = SimpleEM4EvidenceH_Refine(
@@ -175,31 +178,31 @@ def main(args):
     print(f"Params saved to {out_dir / 'em_params.json'}")
 
     # ===== 验证集 step-level 预测 =====
-    val_post = em.predict_proba(val_df)
-    val_pred_step = val_df[["test_case_id", "step"]].copy()
-    val_pred_step["P_EnvFail"] = val_post[:, 0]
-    val_pred_step["P_AgentFail"] = val_post[:, 1]
-    print("val_pred_step sample:")
+    # val_post = em.predict_proba(val_df)
+    # val_pred_step = val_df[["test_case_id", "step"]].copy()
+    # val_pred_step["P_EnvFail"] = val_post[:, 0]
+    # val_pred_step["P_AgentFail"] = val_post[:, 1]
+    # print("val_pred_step sample:")
 
-    # ===== 基于 posterior 对 agent 判决做纠偏建议 =====
-    val_correct = correct_agent_judgment(
-        val_df,
-        em,
-        tau_agentfail=args.tau_agentfail,
-        tau_envfail=args.tau_envfail,
-        tau_envfail_high=args.tau_envfail,
-        alpha=0.75,
-        col_case="test_case_id",
-        col_agent="agent_testcase_score_x",
-    )
+    # # ===== 基于 posterior 对 agent 判决做纠偏建议 =====
+    # val_correct = correct_agent_judgment(
+    #     val_df,
+    #     em,
+    #     tau_agentfail=args.tau_agentfail,
+    #     tau_envfail=args.tau_envfail,
+    #     tau_envfail_high=args.tau_envfail,
+    #     alpha=0.75,
+    #     col_case="test_case_id",
+    #     col_agent="agent_testcase_score_x",
+    # )
 
-    # val_correct = correct_cases_with_post(
-    #     em, val_df, case_col="test_case_id", margin=0.0, out_dir=str(out_dir))
+    # # val_correct = correct_cases_with_post(
+    # #     em, val_df, case_col="test_case_id", margin=0.0, out_dir=str(out_dir))
 
-    # 保存输出
-    val_pred_step.to_csv(out_dir / "val_pred_step.csv", index=False)
-    # val_case_probs.to_csv(out_dir / "val_case_probs.csv", index=False)
-    val_correct.to_csv(out_dir / "val_corrected_cases.csv", index=False)
+    # # 保存输出
+    # val_pred_step.to_csv(out_dir / "val_pred_step.csv", index=False)
+    # # val_case_probs.to_csv(out_dir / "val_case_probs.csv", index=False)
+    # val_correct.to_csv(out_dir / "val_corrected_cases.csv", index=False)
 
 
 def aggregate_case_posteriors(em, df, case_col="test_case_id"):

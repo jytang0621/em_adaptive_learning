@@ -590,10 +590,10 @@ def correct_agent_judgment(df: pd.DataFrame,
 
     val_df = pd.DataFrame(rows).sort_values("case_id")
     acc_original = val_df["agent_original"] == val_df["human_gt"]
-    print(f"Accuracy: {acc_original.mean()}")
+    print(f"Accuracy: {acc_original.mean():.4f}")
 
     acc_correct = val_df["corrected_label"] == val_df["human_gt"]
-    print(f"Accuracy: {acc_correct.mean()}")
+    print(f"Accuracy: {acc_correct.mean():.4f}")
     analyze_flips(val_df)
     confusion_matrix(val_df)
     return val_df
@@ -709,10 +709,10 @@ def correct_agent_judgment(df: pd.DataFrame,
         ))
     val_df = pd.DataFrame(rows).sort_values("case_id")
     acc_original = val_df["agent_original"] == val_df["human_gt"]
-    print(f"Accuracy: {acc_original.mean()}")
+    print(f"Accuracy: {acc_original.mean():.4f}")
 
     acc_correct = val_df["corrected_label"] == val_df["human_gt"]
-    print(f"Accuracy: {acc_correct.mean()}")
+    print(f"Accuracy: {acc_correct.mean():.4f}")
     analyze_flips(val_df)
     confusion_matrix(val_df)
     return val_df
@@ -802,7 +802,7 @@ def confusion_matrix(val_df: pd.DataFrame):
     print("=== Confusion Matrix (GT vs Corrected) ===")
     print(conf_matrix)
     acc = (val_df["human_gt"] == val_df["corrected_label"]).mean()
-    print(f"Accuracy after correction: {acc:.3f}")
+    print(f"Accuracy after correction: {acc:.4f}")
     return conf_matrix
 
 
@@ -873,10 +873,10 @@ def correct_agent_judgment(df: pd.DataFrame,
         ))
     val_df = pd.DataFrame(rows).sort_values("case_id")
     acc_original = val_df["agent_original"] == val_df["human_gt"]
-    print(f"Accuracy: {acc_original.mean()}")
+    print(f"Accuracy: {acc_original.mean():.4f}")
 
     acc_correct = val_df["corrected_label"] == val_df["human_gt"]
-    print(f"Accuracy: {acc_correct.mean()}")
+    print(f"Accuracy: {acc_correct.mean():.4f}")
     analyze_flips(val_df)
     confusion_matrix(val_df)
     return val_df

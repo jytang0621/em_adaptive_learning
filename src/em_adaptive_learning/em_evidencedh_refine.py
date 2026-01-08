@@ -90,7 +90,13 @@ class SimpleEM4EvidenceH_Refine:
             return x
         return (x >= thresh).astype(float)
 
-    def _extract(self, df: pd.DataFrame):
+    def _extract(self, df: pd.DataFrame, disable_channels=None):
+        '''
+        # mask 掉 code
+        # E, w, M, case_ids, C_raw, _ = em.extract(df, disable_channels=[1])
+        # 只留 GUI
+        # E, w, M, case_ids, C_raw, _ = em._extract(df, disable_channels=[1,2])
+        '''
         # ----- 证据 -----
         Eg = self._binarize(df[self.col_gui], self.bin_thresh)
         Ec = self._binarize(df[self.col_code], self.bin_thresh)
@@ -115,8 +121,12 @@ class SimpleEM4EvidenceH_Refine:
         Mc = _get_mask("M_code")
         Mn = _get_mask("M_noresp")
 
+        
         M = np.stack([Mg, Mc, Mn], axis=1)
 
+        if disable_channels:
+            for ch in disable_channels:
+                M[:, ch] = 1
         # ----- sample 权重 -----
         if self.col_w in df.columns:
             w = np.clip(df[self.col_w].to_numpy().astype(float), 0.0, 10.0)
@@ -148,6 +158,7 @@ class SimpleEM4EvidenceH_Refine:
             tmp = np.full(len(arr), np.nan)
             for i, v in enumerate(arr):
                 if pd.isna(v):
+                    # tmp[i] = 2
                     continue
                 if v in (0, 1):
                     tmp[i] = int(v)
@@ -171,6 +182,13 @@ class SimpleEM4EvidenceH_Refine:
         self.psi[:] = np.array([0.4, 0.8])
 
     # ---------- EM fit ----------
+    def apply_terminal_channel_mask_by_order(self, df, M, case_ids, code_idx=1, col_case="test_case_id", tail_k=1):
+        M = M.copy()
+        M[:, code_idx] = 1
+        for cid, g in df.groupby(col_case, sort=False):
+            term_rows = g.index.values[-tail_k:]
+            M[term_rows-1, code_idx] = 0
+        return M
 
     def fit(self,
             df: pd.DataFrame,
@@ -193,6 +211,8 @@ class SimpleEM4EvidenceH_Refine:
 
         # E, w, case_ids, C_raw, delta_sup_raw = self._extract(df)
         E, w, M, case_ids, C_raw, delta_sup_raw = self._extract(df)
+        # M = self.apply_terminal_channel_mask_by_order(df, M, case_ids, code_idx=1, col_case="test_case_id", tail_k=1)
+
         N = E.shape[0]
         eps = 1e-9
 
@@ -226,7 +246,7 @@ class SimpleEM4EvidenceH_Refine:
 
             # ----- E-step -----
             base_log = np.zeros((N, 2))
-            for d in (0, 1):
+            for d in (0, 1,):
                 p_gui, p_cod, p_no = self.theta[d]
                 lg = E[:, 0]*np.log(p_gui+eps) + \
                     (1-E[:, 0])*np.log(1-p_gui+eps)
@@ -362,24 +382,47 @@ class SimpleEM4EvidenceH_Refine:
             lc = E[:, 1]*np.log(p_cod+eps) + (1-E[:, 1])*np.log(1-p_cod+eps)
             ln = E[:, 2]*np.log(p_no+eps) + (1-E[:, 2])*np.log(1-p_no+eps)
 
-            # 关键：对 mask=1 的位置，把该通道贡献清空（忽略该证据）
+            # # 关键：对 mask=1 的位置，把该通道贡献清空（忽略该证据）
             lg[M[:, 0] == 1] = 0.0
             lc[M[:, 1] == 1] = 0.0
             ln[M[:, 2] == 1] = 0.0
 
             base_log[:, d] = self.w_gui*lg + self.w_code*lc + self.w_no*ln
 
-        # ---- agent_testcase_score 通道（case 级）----
+        # ---- agent_testcase_score 通道（只在 terminal step）----
         agent_log = np.zeros((N, 2))
         if C_case is not None:
             C_row = C_case[inv_case]
-            mask = ~np.isnan(C_row)
-            if mask.any():
-                C_obs = C_row[mask]
-                for d in (0, 1):
-                    psi_d = np.clip(self.psi[d], 1e-4, 1-1e-4)
-                    lr = C_obs*np.log(psi_d) + (1-C_obs)*np.log(1-psi_d)
-                    agent_log[mask, d] = self.agent_weight * lr
+            maskC = ~np.isnan(C_row)
+            if maskC.any():
+                # 找到每个 case 的 terminal row：该case最后一次出现的行索引
+                terminal_idx = np.zeros(K, dtype=int)
+                # inv_case 是按 df 行顺序的，所以最后出现的位置就是 terminal
+                for k in range(K):
+                    terminal_idx[k] = np.where(inv_case == k)[0][-1]
+
+                # 只在 terminal 行上写入 agent_log
+                term_rows = terminal_idx
+                # 这些 terminal 行必须同时有 C 才加
+                term_rows = term_rows[maskC[term_rows]]
+
+                if len(term_rows) > 0:
+                    C_obs = C_row[term_rows]
+                    for d in (0, 1):
+                        psi_d = np.clip(self.psi[d], 1e-4, 1-1e-4)
+                        lr = C_obs*np.log(psi_d) + (1-C_obs)*np.log(1-psi_d)
+                        agent_log[term_rows, d] = self.agent_weight * lr
+        # # ---- agent_testcase_score 通道（case 级）----
+        # agent_log = np.zeros((N, 2))
+        # if C_case is not None:
+        #     C_row = C_case[inv_case]
+        #     mask = ~np.isnan(C_row)
+        #     if mask.any():
+        #         C_obs = C_row[mask]
+        #         for d in (0, 1):
+        #             psi_d = np.clip(self.psi[d], 1e-4, 1-1e-4)
+        #             lr = C_obs*np.log(psi_d) + (1-C_obs)*np.log(1-psi_d)
+        #             agent_log[mask, d] = self.agent_weight * lr
 
         # ---- 合成 posterior ----
         log_num = np.log(self.p_delta+eps)[None, :] + base_log + agent_log
@@ -544,8 +587,7 @@ def correct_agent_judgment(df: pd.DataFrame,
     for cid, g in df_tmp.groupby(col_case):
         # agent 原判: 取该 case 最后一个非 nan
         C_vals = g[col_agent].dropna().values
-        if cid == "web_14_2":
-            print(f"C_vals: {C_vals}")
+        
         # 1=PASS?, 0=FAIL? 按你现在的定义自行对应
         C_case = int(C_vals[-1]) if len(C_vals) else None
 
@@ -556,6 +598,10 @@ def correct_agent_judgment(df: pd.DataFrame,
         # 阻塞概率: 越多高风险 step, 越趋向 AgentFail
         P_case_AgentFail = 1.0 - float(np.prod((1.0 - q) ** alpha))
         P_case_EnvFail = 1.0 - P_case_AgentFail
+
+        K = 1  # or 3
+        P_case_EnvFail = float(g["P_EnvFail"].values[-K:].mean())
+        P_case_AgentFail = float(g["P_AgentFail"].values[-K:].mean())
 
         action = "keep_AgentJudge"
         corrected = C_case
@@ -577,6 +623,7 @@ def correct_agent_judgment(df: pd.DataFrame,
                 if P_case_EnvFail >= tau_envfail_high:  # tau_envfail:
                     corrected = 0
                     action = "flip_to_EnvFail"
+
 
         rows.append(dict(
             case_id=cid,
@@ -642,7 +689,7 @@ def confusion_matrix(val_df: pd.DataFrame):
     print(f"Accuracy after correction: {acc:.3f}")
     return conf_matrix
 
-
+''''
 def correct_agent_judgment(df: pd.DataFrame,
                            em: SimpleEM4EvidenceH_Refine,
                            tau_agentfail: float = 0.7,
@@ -716,7 +763,7 @@ def correct_agent_judgment(df: pd.DataFrame,
     analyze_flips(val_df)
     confusion_matrix(val_df)
     return val_df
-
+'''
 
 def analyze_flips(val_df: pd.DataFrame, out_dir: Optional[str] = None):
     """区分两类子集: 原判断正确 vs 错误，查看flip比例"""
@@ -805,6 +852,158 @@ def confusion_matrix(val_df: pd.DataFrame):
     print(f"Accuracy after correction: {acc:.4f}")
     return conf_matrix
 
+import numpy as np
+import pandas as pd
+from typing import Optional
+
+
+'''
+def correct_agent_judgment(
+    df: pd.DataFrame,
+    em,  # SimpleEM4EvidenceH_Refine (3-state)
+    tau_pass: float = 0.5,
+    tail_k: int = 1,
+    conf_margin: float = 0.0,
+    # 可选：FAIL 时根因的置信度门槛（不影响 PASS/FAIL 纠偏）
+    tau_rootcause_conf: float = 0.0,
+    col_case: str = "test_case_id",
+    col_agent: str = "agent_testcase_score_x",  # agent PASS/FAIL 原判
+    col_gt: str = "phi",                        # human PASS/FAIL 真值
+    debug_case: Optional[str] = None,
+):
+    """
+    语义（非常重要）：
+      - human_gt / agent_original：PASS/FAIL（1=PASS, 0=FAIL）
+      - EnvFail/AgentFail：仅在 FAIL 时的根因归因
+
+    三状态 EM 输出：
+      post[:,0] = P(FailEnv)
+      post[:,1] = P(FailAgent)
+      post[:,2] = P(Pass)
+
+    纠偏策略：
+      - case-level P_pass 用最后一步或 tail_k 均值
+      - corrected_passfail = 1 if P_pass >= tau_pass else 0
+      - 可选：加 conf_margin（|P_pass - (1-P_pass)|）门控，避免边界翻转
+      - 根因：仅当 corrected_passfail==0 时输出 rootcause（0=FailEnv, 1=FailAgent）
+    """
+
+    post = em.predict_proba(df)
+    if post.shape[1] != 3:
+        raise ValueError(f"Expected 3-state posterior (N,3), got {post.shape}")
+
+    df_tmp = df.copy()
+    df_tmp["P_fail_env"] = post[:, 0]
+    df_tmp["P_fail_agent"] = post[:, 1]
+    df_tmp["P_pass"] = post[:, 2]
+    df_tmp["P_fail"] = 1.0 - df_tmp["P_pass"]
+
+    rows = []
+
+    for cid, g in df_tmp.groupby(col_case, sort=False):
+        # -------- agent original PASS/FAIL --------
+        C_vals = g[col_agent].dropna().values if col_agent in g.columns else np.array([])
+        C_case = int(float(C_vals[-1]) >= 0.5) if len(C_vals) else None  # 1=PASS,0=FAIL
+
+        # -------- human gt PASS/FAIL --------
+        gt_vals = g[col_gt].dropna().values if col_gt in g.columns else np.array([])
+        gt = int(float(gt_vals[-1]) >= 0.5) if len(gt_vals) else None
+
+        if debug_case and cid == debug_case:
+            print(f"[DEBUG] {cid} agent_original_vals={C_vals}, human_gt_vals={gt_vals}")
+
+        # -------- case-level posterior (tail-k mean) --------
+        kk = int(max(1, tail_k))
+        p_pass_case = float(g["P_pass"].values[-kk:].mean())
+        p_fail_case = 1.0 - p_pass_case
+
+        # 置信度门控：避免在 0.5 附近翻转（可选）
+        # 二分类下 conf = |P_pass - P_fail| = |2*P_pass - 1|
+        conf = abs(2.0 * p_pass_case - 1.0)
+
+        corrected_passfail = C_case
+        action = "keep_agent_original"
+
+        # 如果 agent 原判缺失，就直接用 EM
+        if C_case is None:
+            corrected_passfail = 1 if p_pass_case >= tau_pass else 0
+            action = "em_decide_no_agent_original"
+        else:
+            # 如果启用 margin，则只有足够自信才允许翻
+            if conf_margin > 0 and conf < conf_margin:
+                corrected_passfail = C_case
+                action = "keep_low_confidence"
+            else:
+                em_pred = 1 if p_pass_case >= tau_pass else 0
+                if em_pred != C_case:
+                    corrected_passfail = em_pred
+                    action = "flip_by_em"
+                else:
+                    corrected_passfail = C_case
+                    action = "keep_agree"
+
+        # -------- rootcause (only if FAIL) --------
+        rootcause = None  # 0=FailEnv, 1=FailAgent
+        p_root_env = None
+        p_root_agent = None
+        root_conf = None
+
+        if corrected_passfail == 0:
+            # 用 tail-k 的 fail_env / fail_agent 做根因
+            p_env = float(g["P_fail_env"].values[-kk:].mean())
+            p_ag = float(g["P_fail_agent"].values[-kk:].mean())
+
+            # 归一化为 P(root | fail)（更干净）
+            denom = max(p_env + p_ag, 1e-9)
+            p_root_env = p_env / denom
+            p_root_agent = p_ag / denom
+            root_conf = abs(p_root_env - p_root_agent)
+
+            if root_conf >= tau_rootcause_conf:
+                rootcause = 0 if p_root_env >= p_root_agent else 1
+            else:
+                rootcause = None  # 不够自信就不输出根因
+
+        rows.append(dict(
+            case_id=cid,
+            human_gt=gt,
+            agent_original=C_case,
+
+            # case-level probabilities
+            P_case_pass=p_pass_case,
+            P_case_fail=p_fail_case,
+
+            # rootcause probs if fail
+            P_root_env=p_root_env,
+            P_root_agent=p_root_agent,
+            rootcause_conf=root_conf,
+            rootcause=rootcause,
+
+            corrected_passfail=corrected_passfail,
+            action=action,
+            pass_conf=conf,
+        ))
+
+    val_df = pd.DataFrame(rows).sort_values("case_id")
+
+    # -------- metrics --------
+    if val_df["agent_original"].notna().all() and val_df["human_gt"].notna().all():
+        acc_original = (val_df["agent_original"] == val_df["human_gt"]).mean()
+        print(f"Accuracy Original: {acc_original:.4f}")
+
+    if val_df["corrected_passfail"].notna().all() and val_df["human_gt"].notna().all():
+        acc_correct = (val_df["corrected_passfail"] == val_df["human_gt"]).mean()
+        print(f"Accuracy Corrected: {acc_correct:.4f}")
+
+    # 翻转统计
+    if val_df["agent_original"].notna().all():
+        flips = (val_df["corrected_passfail"] != val_df["agent_original"])
+        print(f"Flip rate: {flips.mean():.4f} ({flips.sum()}/{len(flips)})")
+        print(f"0->1 flips: {((val_df['agent_original']==0) & (val_df['corrected_passfail']==1)).sum()}")
+        print(f"1->0 flips: {((val_df['agent_original']==1) & (val_df['corrected_passfail']==0)).sum()}")
+
+    return val_df
+'''
 
 def correct_agent_judgment(df: pd.DataFrame,
                            em: SimpleEM4EvidenceH_Refine,
@@ -825,6 +1024,8 @@ def correct_agent_judgment(df: pd.DataFrame,
     df_tmp["P_AgentFail"] = post[:, 1]
 
     rows = []
+    
+
     for cid, g in df_tmp.groupby(col_case):
         # agent 原判: 取该 case 最后一个非 nan
         C_vals = g[col_agent].dropna().values
@@ -862,6 +1063,15 @@ def correct_agent_judgment(df: pd.DataFrame,
                     corrected = 0
                     action = "flip_to_EnvFail"
 
+        
+        # # case posterior：取最后一步
+        # P_case_pass = g["P_pass"].values[-1]
+        # corrected_passfail = 1 if P_case_pass >= 0.5 else 0
+
+        # if corrected_passfail == 0:
+        #     rootcause = 0 if g["P_fail_env"].values[-1] >= g["P_fail_agent"].values[-1] else 1
+        
+
         rows.append(dict(
             case_id=cid,
             human_gt=gt,
@@ -873,10 +1083,175 @@ def correct_agent_judgment(df: pd.DataFrame,
         ))
     val_df = pd.DataFrame(rows).sort_values("case_id")
     acc_original = val_df["agent_original"] == val_df["human_gt"]
-    print(f"Accuracy: {acc_original.mean():.4f}")
+    print(f"Accuracy Original: {acc_original.mean():.4f}")
 
     acc_correct = val_df["corrected_label"] == val_df["human_gt"]
-    print(f"Accuracy: {acc_correct.mean():.4f}")
+    print(f"Accuracy Corrected: {acc_correct.mean():.4f}")
+    
+    # 导出到表格
+    val_df.to_excel("correct_agent_judgment_last.xlsx", index=False)
     analyze_flips(val_df)
     confusion_matrix(val_df)
     return val_df
+
+
+def aggregate_case_posterior_from_steps(pE_steps, pA_steps, beta=1.0, eps=1e-9):
+    """
+    pE_steps, pA_steps: shape (T,)
+    beta: 温度/缩放，<1 可缓解长轨迹导致的过度自信
+    """
+    pE = np.clip(np.asarray(pE_steps, float), eps, 1-eps)
+    pA = np.clip(np.asarray(pA_steps, float), eps, 1-eps)
+
+    logE = beta * np.log(pE).sum()
+    logA = beta * np.log(pA).sum()
+
+    m = max(logE, logA)
+    P_A = np.exp(logA - (m + np.log(np.exp(logA-m) + np.exp(logE-m))))
+    P_E = 1.0 - P_A
+    return float(P_E), float(P_A)
+
+def correct_agent_rootcause_terminal(
+    df: pd.DataFrame,
+    em,
+    tau_agentfail: float = 0.7,
+    tau_envfail: float = 0.7,
+    col_case: str = "test_case_id",
+    col_agent: str = "agent_testcase_score_x",  # 这里现在表示 agent 的 root-cause 判定
+):
+    """
+    纠偏 root-cause：EnvFail(0) vs AgentFail(1)
+    只使用 terminal step 的 posterior 作为 case-level posterior（与 terminal-only psi 完全对齐）
+    """
+    post = em.predict_proba(df)  # step-level posterior
+    df_tmp = df.copy()
+    df_tmp["P_EnvFail"] = post[:, 0]
+    df_tmp["P_AgentFail"] = post[:, 1]
+
+    df_tmp["p0"] = post[:,0]
+    df_tmp["p1"] = post[:,1]
+
+    E, w, M, case_ids, C_raw, _ = em._extract(df)   # E[:,0]=gui, E[:,1]=code, E[:,2]=noresp
+    df_tmp["E_gui"] = E[:,0]
+    df_tmp["E_code"] = E[:,1]
+    df_tmp["E_no"]  = E[:,2]
+
+    def mean_pair(col):
+        return (df_tmp.loc[df_tmp[col]==1, ["p0","p1"]].mean(),
+                df_tmp.loc[df_tmp[col]==0, ["p0","p1"]].mean())
+
+    print("GUI=1 vs GUI=0 mean(p0,p1):", mean_pair("E_gui"))
+    print("NO =1 vs NO =0 mean(p0,p1):", mean_pair("E_no"))
+    print("CODE=1 vs CODE=0 mean(p0,p1):", mean_pair("E_code"))
+
+    rows = []
+    for cid, g in df_tmp.groupby(col_case, sort=False):
+        # agent 原判（root-cause）：取该 case 最后一个非 nan
+        C_vals = g[col_agent].dropna().values
+        C_case = int(C_vals[-1]) if len(C_vals) else None
+
+        # human_gt（root-cause）
+        gt_vals = g["phi"].dropna().values
+        gt = int(gt_vals[-1]) if len(gt_vals) else None
+
+        # case posterior：取 terminal step（即该case最后一行）
+        P_case_EnvFail = float(g["P_EnvFail"].values[-1])
+        P_case_AgentFail = float(g["P_AgentFail"].values[-1])
+
+        action = "keep"
+        corrected = C_case
+
+        if C_case is not None:
+            if C_case == 0:
+                # 原判 EnvFail，但模型强烈认为是 AgentFail -> 翻
+                if P_case_AgentFail >= tau_agentfail:
+                    corrected = 1
+                    action = "flip_to_AgentFail"
+            elif C_case == 1:
+                # 原判 AgentFail，但模型强烈认为是 EnvFail -> 翻
+                if P_case_EnvFail >= tau_envfail:
+                    corrected = 0
+                    action = "flip_to_EnvFail"
+
+        rows.append(dict(
+            case_id=cid,
+            human_gt=gt,
+            agent_original=C_case,
+            P_case_EnvFail=P_case_EnvFail,
+            P_case_AgentFail=P_case_AgentFail,
+            corrected_label=corrected,
+            action=action
+        ))
+
+    val_df = pd.DataFrame(rows).sort_values("case_id")
+
+    # 评估与分析（保持你原来的）
+    acc_original = (val_df["agent_original"] == val_df["human_gt"])
+    print(f"Accuracy(original): {acc_original.mean():.4f}")
+
+    acc_correct = (val_df["corrected_label"] == val_df["human_gt"])
+    print(f"Accuracy(corrected): {acc_correct.mean():.4f}")
+
+    analyze_flips(val_df)
+    confusion_matrix(val_df)
+    return val_df
+
+def fuse_correct_rootcause(
+    val_df,
+    prior_correct=0.9,   # 认为 agent 原判正确的先验（非常重要）
+    beta=0.7             # EM 证据强度
+):
+    eps = 1e-9
+    corrected = []
+
+    for _, r in val_df.iterrows():
+        C = r["agent_original"]   # 0=EnvFail, 1=AgentFail
+
+        if C is None:
+            corrected.append(None)
+            continue
+
+        # agent 原判先验
+        if C == 0:
+            p_prior = np.array([prior_correct, 1 - prior_correct])
+        else:
+            p_prior = np.array([1 - prior_correct, prior_correct])
+
+        # EM posterior
+        p_em = np.array([r["P_case_EnvFail"], r["P_case_AgentFail"]])
+        p_em = np.clip(p_em, eps, 1 - eps)
+
+        # log-space 融合
+        logp = np.log(p_prior) + beta * np.log(p_em)
+        p = np.exp(logp - logp.max())
+        p = p / p.sum()
+
+        corrected.append(int(np.argmax(p)))
+
+    val_df = val_df.copy()
+    val_df["corrected_label"] = corrected
+    return val_df
+
+def correct_by_em_selective(val_df, conf_tau=0.6):
+    """
+    val_df: 每 case 一行，包含 agent_original(0/1), P_case_EnvFail, P_case_AgentFail
+    """
+    out = val_df.copy()
+    pE = out["P_case_EnvFail"].astype(float)
+    pA = out["P_case_AgentFail"].astype(float)
+
+    out["confidence"] = (pE - pA).abs()
+    out["corrected_label"] = out["agent_original"]
+    out["action"] = "keep"
+
+    # EM 很自信且指向 AgentFail
+    m1 = (out["confidence"] >= conf_tau) & (pA > pE)
+    out.loc[m1, "corrected_label"] = 1
+    out.loc[m1, "action"] = "flip_to_AgentFail"
+
+    # EM 很自信且指向 EnvFail
+    m0 = (out["confidence"] >= conf_tau) & (pE > pA)
+    out.loc[m0, "corrected_label"] = 0
+    out.loc[m0, "action"] = "flip_to_EnvFail"
+
+    return out

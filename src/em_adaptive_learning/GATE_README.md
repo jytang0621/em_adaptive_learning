@@ -173,80 +173,32 @@ if gate_model_path.exists():
     calculate_and_print_accuracy(pred_correct, df)
 ```
 
-## 3. Gate 模型有效性验证（基于realdevbench的测试集进行初步理解）
+## 3. 执行入口
 
-### 3.1 训练期指标验证
+### 3.1 训练 Gate 模型
 
-Gate 模型在训练集上的表现指标证明了其有效性：
+```bash
+python src/em_adaptive_learning/run_rootcase.py \
+    --mode train \
+    --input_file <训练数据文件> \
+    --gate_model_path <gate模型保存路径>
+```
 
-- **ROC-AUC ≈ 0.66**: 在 noisy GUI 场景下是合理水平，表明模型具有区分能力
-- **AP (Average Precision) ≈ 0.52**: 明显高于 base rate (0.26)，说明排序有信息量
-- **Brier Score ≈ 0.18**: 概率校准良好
-- **mean_p_err ≈ pos_rate ≈ 0.26**: 概率校准成功，这是使用阈值/分位数进行风险分层的前提
+### 3.2 使用 Gate 模型进行预测和矫正
 
-**结论**: Gate 模型没有过拟合、没有系统性偏置，完全可作为"是否进入纠偏"的第一道门。
+```bash
+python src/em_adaptive_learning/run_rootcase.py \
+    --mode predict \
+    --input_file <测试数据文件> \
+    --gate_model_path <gate模型路径> \
+    --em_model_path <em模型路径>
+```
 
-### 3.2 测试集验证
+### 3.3 批量运行实验
 
-测试集上的 sanity check 结果显示了三个关键信号：
-
-#### ✅ 信号 1: 最高风险桶是"干净的"
-
-高风险桶 `[0.4, 0.6)` 中：
-- 只有 8 个 case
-- **100% 全是错误**
-
-这说明 Gate 在测试集上确实能挑出"几乎必错"的 case，这是后续 EM 翻转/重试的黄金触发区。
-
-#### ✅ 信号 2: p_err 分布合理
-
-测试集上 p_err 分布很窄（min ≈ 0.15, max ≈ 0.43, 75% ≈ 0.30），说明：
-- 测试集整体比训练集更"温和"
-- 几乎没有极端高风险样本
-- 中桶 `[0.2, 0.4)` 很大（325 cases），高桶 `[0.4, 0.6)` 很小（8 cases）
-
-这不是坏事，而是一个现实信号：测试集里"明显不可靠的判决"本来就不多。
-
-#### ⚠️ 信号 3: 低桶 error_rate 的统计解释
-
-低桶 `[0.0, 0.2)` 的 error_rate 为 0.38，这不是 Gate 的 bug，而是统计/采样现象：
-- 低桶样本只有 58 个
-- 测试集 error_rate 本身 ≈ 0.26
-- NB gate 在 test 上的 rank 信息 > 绝对概率信息
-
-**关键理解**: 低桶 ≠ "一定安全"，而是"相对更安全"。这正是为什么不要用 Gate 去"证明正确"，而是只用它去"筛出危险"。
-
-### 3.3 对矫正策略的启示
-
-#### ❌ 不要做的事
-
-- ❌ 不要在测试集用固定阈值（比如 0.5）
-- ❌ 不要对 `[0.2, 0.4)` 这个大桶 aggressive 翻转
-- ❌ 不要追求"gate 后 accuracy 必须上升"
-
-#### ✅ 正确、稳健的用法（推荐）
-
-**1. 使用分位数 / top-K gate，而不是绝对阈值**
-
-- Top 5% p_err → High-risk（≈ 6–7 cases）
-- Top 20% p_err → Mid-risk
-- 其余 → Low-risk
-
-在当前测试集里，Top 5% 基本就对应 `[0.4, 0.6)`。
-
-**2. 只在 High-risk 区域允许"动作"**
-
-结合 EM 归因的策略：
-
-| 区域 | 行为 |
-|------|------|
-| Low-risk (低风险) | KEEP（不纠偏） |
-| Mid-risk (中等风险) | 运行 EM → 多数 ABSTAIN / 标记不可靠 |
-| High-risk (高风险) | 运行 EM → 唯一允许 FLIP / RETRY 的区域 |
-
-**重要性质**: 所有的 flip 都发生在"几乎必错"的 case 上
-- → flip precision 非常高
-- → 即便 flip 数量很少，系统可信度也显著提升
+```bash
+python src/em_adaptive_learning/batch_run_rootcase.py
+```
 
 ## 4. 优势
 
@@ -263,7 +215,8 @@ em_adaptive_learning/
 ├── gate.py                    # Gate 模型训练和预测
 ├── run_rootcase.py            # 主脚本，包含 Gate 控制流程
 ├── evaluation_utils.py        # 评估工具函数
-└── batch_run_rootcase.py      # 批量运行脚本
+├── batch_run_rootcase.py      # 批量运行脚本
+└── GATE_VALIDATION.md         # 模型有效性验证文档
 ```
 
 ## 6. 注意事项
@@ -272,4 +225,8 @@ em_adaptive_learning/
 2. **特征一致性**: 预测时使用的特征必须与训练时一致
 3. **风险阈值**: 可以根据实际效果调整风险分层的阈值（当前为 0.4 和 0.6）
 4. **EM 模型**: 需要先训练好 EM 模型，用于 mid/high 风险 case 的归因
+
+## 7. 更多信息
+
+详细的模型有效性验证和策略分析请参考 [GATE_VALIDATION.md](GATE_VALIDATION.md)。
 

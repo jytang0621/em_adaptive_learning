@@ -173,7 +173,7 @@ if gate_model_path.exists():
     calculate_and_print_accuracy(pred_correct, df)
 ```
 
-## 3. Gate 模型有效性验证
+## 3. Gate 模型有效性验证（基于realdevbench的测试集进行初步理解）
 
 ### 3.1 训练期指标验证
 

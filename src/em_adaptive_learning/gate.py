@@ -7,11 +7,12 @@ import pickle
 import numpy as np
 import pandas as pd
 
-from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import StratifiedKFold, cross_val_score
 from sklearn.pipeline import Pipeline
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.naive_bayes import BernoulliNB
-from sklearn.metrics import roc_auc_score, average_precision_score, brier_score_loss
+from sklearn.metrics import roc_auc_score, average_precision_score, brier_score_loss, make_scorer
+from sklearn.feature_selection import SelectKBest, f_classif
 
 # -----------------------------
 def build_case_features(
@@ -151,15 +152,52 @@ def train_gate_model_nb(
     calibrate_method: str = "sigmoid",   # sigmoid 推荐；isotonic 数据大才用
     n_splits: int = 5,
     seed: int = 42,
+    optimize_alpha: bool = True,         # 是否优化 alpha 参数
+    feature_selection: bool = False,     # 是否进行特征选择
+    n_features: Optional[int] = None,   # 特征选择时保留的特征数（None 表示保留所有）
 ) -> GateModelNB:
     """
     朴素贝叶斯 gate：
       - BernoulliNB 适配 0/1 evidence
       - CalibratedClassifierCV 做概率校准
+      - 可选的超参数优化和特征选择
     """
+    X_work = X.copy()
+    
+    # 特征选择（可选）
+    selected_features = list(X.columns)
+    if feature_selection and len(X.columns) > 1:
+        if n_features is None:
+            n_features = min(len(X.columns), max(10, len(X.columns) // 2))
+        selector = SelectKBest(score_func=f_classif, k=min(n_features, len(X.columns)))
+        X_selected = selector.fit_transform(X_work, y_err)
+        selected_features = [X.columns[i] for i in selector.get_support(indices=True)]
+        X_work = pd.DataFrame(X_selected, index=X.index, columns=selected_features)
+        print(f"[Feature Selection] Selected {len(selected_features)}/{len(X.columns)} features")
+    
+    # 超参数优化（可选）
+    best_alpha = alpha
+    if optimize_alpha and len(np.unique(y_err)) > 1:
+        # 尝试不同的 alpha 值
+        alpha_candidates = [0.1, 0.5, 1.0, 2.0, 5.0]
+        cv = StratifiedKFold(n_splits=min(n_splits, 5), shuffle=True, random_state=seed)
+        best_score = -np.inf
+        
+        for a in alpha_candidates:
+            base = BernoulliNB(alpha=a)
+            # 使用 AP (Average Precision) 作为评估指标
+            scorer = make_scorer(average_precision_score, needs_proba=True)
+            scores = cross_val_score(base, X_work, y_err, cv=cv, scoring=scorer, n_jobs=-1)
+            mean_score = scores.mean()
+            if mean_score > best_score:
+                best_score = mean_score
+                best_alpha = a
+        
+        print(f"[Alpha Optimization] Best alpha: {best_alpha:.2f} (AP: {best_score:.4f})")
+    
     # NB 不需要标准化
     base = Pipeline(steps=[
-        ("nb", BernoulliNB(alpha=alpha))
+        ("nb", BernoulliNB(alpha=best_alpha))
     ])
 
     cv = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=seed)
@@ -168,11 +206,11 @@ def train_gate_model_nb(
         estimator=base,
         method=calibrate_method,
         cv=cv,
-        n_jobs=None,
+        n_jobs=-1,  # 使用并行加速
     )
-    calib.fit(X, y_err)
+    calib.fit(X_work, y_err)
 
-    return GateModelNB(model=calib, feature_names=list(X.columns))
+    return GateModelNB(model=calib, feature_names=selected_features)
 
 
 def gate_predict_proba_nb(gate: GateModelNB, X: pd.DataFrame) -> pd.Series:
@@ -209,6 +247,9 @@ def fit_gate_nb_from_step_df(
     alpha: float = 1.0,
     thr: float = 0.5,
     calibrate_method: str = "sigmoid",
+    optimize_alpha: bool = True,      # 是否优化 alpha 参数
+    feature_selection: bool = False,  # 是否进行特征选择
+    n_features: Optional[int] = None, # 特征选择时保留的特征数
 ):
     # 1) 聚合到 case features
     X_case, y_err, _ = build_case_features(
@@ -224,12 +265,15 @@ def fit_gate_nb_from_step_df(
     # 2) 二值化（BernoulliNB 最稳）
     X_bin = binarize_features(X_case, thr=thr)
 
-    # 3) 训练 NB gate + 校准
+    # 3) 训练 NB gate + 校准（带优化选项）
     gate = train_gate_model_nb(
         X_bin,
         y_err,
         alpha=alpha,
         calibrate_method=calibrate_method,
+        optimize_alpha=optimize_alpha,
+        feature_selection=feature_selection,
+        n_features=n_features,
     )
 
     # 4) 预测与评估
@@ -448,7 +492,7 @@ def sanity_check_report(case_df):
 
 if __name__ == "__main__":
     # ========== 训练阶段 ==========
-    df_train = pd.read_excel("/data/hongsirui/em_adaptive_learning/em_df_realdevbench_claude_4_train.xlsx")
+    df_train = pd.read_excel("/data/hongsirui/opensource_em_adaptive/em_adaptive_learning/src/em_df_realdevbench_claude_4_train_filter.xlsx")
     print("Training data columns:", df_train.columns.tolist())
     
     # 训练 gate 模型
@@ -462,7 +506,7 @@ if __name__ == "__main__":
     
     # ========== 推理阶段 ==========
     # 方式1：使用训练好的模型直接推理
-    df_test = pd.read_excel("/data/hongsirui/em_adaptive_learning/em_df_realdevbench_claude_4_test.xlsx")
+    df_test = pd.read_excel("/data/hongsirui/opensource_em_adaptive/em_adaptive_learning/src/em_df_realdevbench_claude_4_test.xlsx")
     report_test = infer_gate_nb_from_step_df(
         gate=gate,
         df_step=df_test,

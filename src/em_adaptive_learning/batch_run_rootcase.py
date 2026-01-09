@@ -37,7 +37,13 @@ DEFAULT_DATASETS = {
         "out_dir": "/data/hongsirui/opensource_em_adaptive/em_outputs_refine_webdevjudge_ui_tars",
         "params_path": "/data/hongsirui/opensource_em_adaptive/em_outputs_refine_webdevjudge_ui_tars/em_params.json",
     
-    }
+    },
+    # "realdevbench_claude4_query":{
+    #     "data_path": "/data/hongsirui/opensource_em_adaptive/em_df_realdevbench_claude_4_train_reflection_v2_group.xlsx",
+    #     "test_path": "/data/hongsirui/opensource_em_adaptive/em_df_realdevbench_claude_4_test_reflection_v2_group.xlsx",
+    #     "out_dir": "/data/hongsirui/opensource_em_adaptive/em_outputs_refine_realdevbench_appevalpilot_claude4_query",
+    #     "params_path": "/data/hongsirui/opensource_em_adaptive/em_outputs_refine_realdevbench_appevalpilot_claude4_query/em_params.json",
+    # },
 }
 
 
@@ -46,9 +52,13 @@ def run_single_experiment(
     dataset_config: Dict[str, Any],
     val_ratio: float = 0.4,
     seed: int = 127,
-    tau_agentfail: float = 0.75,
-    tau_envfail: float = 0.75,
+    tau_agentfail: float = 1,
+    tau_envfail: float = 0.65, #0.65,
     script_path: str = None,
+    agent_weight: float = 0.5,
+    w_gui: float = 0.8,
+    w_code: float = 1.2,
+    w_noresp: float = 0.3,
 ) -> Dict[str, Any]:
     """
     运行单个数据集的实验
@@ -79,6 +89,7 @@ def run_single_experiment(
     cmd = [
         sys.executable,
         str(script_path),
+        "--dataset_name", dataset_name,
         "--data_path", dataset_config["data_path"],
         "--test_path", dataset_config["test_path"],
         "--params_path", dataset_config["params_path"],
@@ -87,6 +98,10 @@ def run_single_experiment(
         "--seed", str(seed),
         "--tau_agentfail", str(tau_agentfail),
         "--tau_envfail", str(tau_envfail),
+        "--agent_weight", str(agent_weight),
+        "--w_gui", str(w_gui),
+        "--w_code", str(w_code),
+        "--w_noresp", str(w_noresp),
     ]
     
     print(f"\n{'═'*80}")

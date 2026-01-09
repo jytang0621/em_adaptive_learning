@@ -66,7 +66,7 @@ class SimpleEM4EvidenceH_Refine:
         # [EnvFail, AgentFail]
         self.p_delta = np.array([0.5, 0.5], dtype=float)
         # gui/code/noresp
-        self.theta = np.full((2, 3), 0.5, dtype=float)
+        self.theta = np.full((2, 3), 0.1, dtype=float)
         # P(C=1|EnvFail), P(C=1|AgentFail]
         self.psi = np.array([0.5, 0.5], dtype=float)
 
@@ -182,12 +182,26 @@ class SimpleEM4EvidenceH_Refine:
         self.psi[:] = np.array([0.4, 0.8])
 
     # ---------- EM fit ----------
+    # def apply_terminal_channel_mask_by_order(self, df, M, case_ids, code_idx=1, col_case="test_case_id", tail_k=1):
+    #     M = M.copy()
+    #     M[:, code_idx] = 1
+    #     for cid, g in df.groupby(col_case, sort=False):
+    #         term_rows = g.index.values[-tail_k:]
+    #         M[term_rows-1, code_idx] = 0
+    #     return M
     def apply_terminal_channel_mask_by_order(self, df, M, case_ids, code_idx=1, col_case="test_case_id", tail_k=1):
         M = M.copy()
         M[:, code_idx] = 1
-        for cid, g in df.groupby(col_case, sort=False):
-            term_rows = g.index.values[-tail_k:]
-            M[term_rows-1, code_idx] = 0
+        # 重置索引以确保位置索引与 M 对齐
+        df_reset = df.reset_index(drop=True)
+        
+        for cid, g in df_reset.groupby(col_case, sort=False):
+            # 获取该组的最后 tail_k 个行的位置索引（已经是 0-based）
+            term_positions = g.index.values[-tail_k:]
+            # 直接使用位置索引，添加边界检查
+            for pos in term_positions:
+                if 0 <= pos < M.shape[0]:
+                    M[pos, code_idx] = 0
         return M
 
     def fit(self,
@@ -210,8 +224,8 @@ class SimpleEM4EvidenceH_Refine:
         self.col_w = col_w
 
         # E, w, case_ids, C_raw, delta_sup_raw = self._extract(df)
-        E, w, M, case_ids, C_raw, delta_sup_raw = self._extract(df)
-        # M = self.apply_terminal_channel_mask_by_order(df, M, case_ids, code_idx=1, col_case="test_case_id", tail_k=1)
+        E, w, M, case_ids, C_raw, delta_sup_raw = self._extract(df, disable_channels=[1,2])
+        M = self.apply_terminal_channel_mask_by_order(df, M, case_ids, code_idx=1, col_case="test_case_id", tail_k=1)
 
         N = E.shape[0]
         eps = 1e-9
@@ -244,6 +258,10 @@ class SimpleEM4EvidenceH_Refine:
         for it in range(self.max_iter):
             T = max(self.temp, 1e-3)
 
+            theta_prev = self.theta.copy()
+            psi_prev   = self.psi.copy()
+            pi_prev    = self.p_delta.copy()
+
             # ----- E-step -----
             base_log = np.zeros((N, 2))
             for d in (0, 1,):
@@ -255,17 +273,33 @@ class SimpleEM4EvidenceH_Refine:
                 ln = E[:, 2]*np.log(p_no+eps) + (1-E[:, 2])*np.log(1-p_no+eps)
                 base_log[:, d] = self.w_gui*lg + self.w_code*lc + self.w_no*ln
 
-            # agent channel：按 case-level C_case 映射到每一行
+            # # agent channel：按 case-level C_case 映射到每一行
+            # agent_log = np.zeros((N, 2))
+            # if C_case is not None:
+            #     C_row = C_case[inv_case]  # case 值广播到每行
+            #     mask = ~np.isnan(C_row)
+            #     if mask.any():
+            #         C_obs = C_row[mask]
+            #         for d in (0, 1):
+            #             psi_d = np.clip(self.psi[d], 1e-4, 1-1e-4)
+            #             lr = C_obs*np.log(psi_d) + (1-C_obs)*np.log(1-psi_d)
+            #             agent_log[mask, d] = self.agent_weight * lr
             agent_log = np.zeros((N, 2))
             if C_case is not None:
-                C_row = C_case[inv_case]  # case 值广播到每行
-                mask = ~np.isnan(C_row)
-                if mask.any():
-                    C_obs = C_row[mask]
-                    for d in (0, 1):
-                        psi_d = np.clip(self.psi[d], 1e-4, 1-1e-4)
-                        lr = C_obs*np.log(psi_d) + (1-C_obs)*np.log(1-psi_d)
-                        agent_log[mask, d] = self.agent_weight * lr
+                C_row = C_case[inv_case]
+                maskC = ~np.isnan(C_row)
+                if maskC.any():
+                    terminal_idx = np.zeros(K, dtype=int)
+                    for k in range(K):
+                        terminal_idx[k] = np.where(inv_case == k)[0][-1]
+                    term_rows = terminal_idx
+                    term_rows = term_rows[maskC[term_rows]]
+                    if len(term_rows) > 0:
+                        C_obs = C_row[term_rows]
+                        for d in (0, 1):
+                            psi_d = np.clip(self.psi[d], 1e-4, 1-1e-4)
+                            lr = C_obs*np.log(psi_d) + (1-C_obs)*np.log(1-psi_d)
+                            agent_log[term_rows, d] = self.agent_weight * lr
 
             log_num = (np.log(self.p_delta+eps)[None, :] +
                        base_log + agent_log) / T
@@ -276,14 +310,14 @@ class SimpleEM4EvidenceH_Refine:
             resp = np.exp(log_num - log_den)  # (N,2)
 
             # ----- 半监督硬锚 (case-level delta_label) -----
-            if not np.all(np.isnan(delta_case)):
-                for k in range(K):
-                    if np.isnan(delta_case[k]):
-                        continue
-                    d = int(delta_case[k])  # 0 or 1
-                    idx = (inv_case == k)
-                    resp[idx, :] = 0.0
-                    resp[idx, d] = 1.0
+            # if not np.all(np.isnan(delta_case)):
+            #     for k in range(K):
+            #         if np.isnan(delta_case[k]):
+            #             continue
+            #         d = int(delta_case[k])  # 0 or 1
+            #         idx = (inv_case == k)
+            #         resp[idx, :] = 0.0
+            #         resp[idx, d] = 1.0
 
             # ----- M-step -----
 
@@ -310,21 +344,43 @@ class SimpleEM4EvidenceH_Refine:
                     self.theta[d, j] = float(
                         np.clip(p, self.theta_floor, self.theta_ceil))
 
+
+            d_theta = np.max(np.abs(self.theta - theta_prev))
+            
+            d_pi    = np.max(np.abs(self.p_delta - pi_prev))
+
+            
             # (3) 更新 psi (C 通道)，在 case-level 上
             if C_case is not None:
                 # 对每个 case 计算该 case 属于 δ 的责任
+                # Rcase = np.zeros((K, 2))
+                # for k in range(K):
+                #     idx = (inv_case == k)
+                #     if not idx.any():
+                #         continue
+                #     wk = w[idx][:, None] * resp[idx, :]
+                #     Rcase[k, :] = wk.sum(axis=0)
+                    
+                    # s = wk.sum()
+                    # if s > 0:
+                    #     Rcase[k, :] = wk.sum(axis=0) / (s + 1e-9)   # 每个 case 总权重=1
+
+                # 仅用 terminal 行聚合 Rcase
                 Rcase = np.zeros((K, 2))
                 for k in range(K):
                     idx = (inv_case == k)
-                    if not idx.any():
+                    if not idx.any(): 
                         continue
-                    wk = w[idx][:, None] * resp[idx, :]
-                    Rcase[k, :] = wk.sum(axis=0)
+                    t = np.where(idx)[0][-1]      # terminal row index
+                    wk = w[t] * resp[t, :]        # 只用 terminal 的责任度
+                    Rcase[k, :] = wk
                 # EnvFail
                 ones0 = 0.0
                 den0 = 0.0
                 ones1 = 0.0
                 den1 = 0.0
+               
+
                 for k in range(K):
                     if np.isnan(C_case[k]):
                         continue
@@ -338,20 +394,36 @@ class SimpleEM4EvidenceH_Refine:
                     self.psi[0] = float(
                         np.clip((ones0 + self.a_c0 - 1) /
                                 (den0 + self.a_c0 + self.b_c0 - 2 + eps),
-                                0.02, 0.98)
+                                1e-4, 1-1e-4)
                     )
                 if den1 > 0:
                     self.psi[1] = float(
                         np.clip((ones1 + self.a_c1 - 1) /
                                 (den1 + self.a_c1 + self.b_c1 - 2 + eps),
-                                0.02, 0.98)
+                                1e-4, 1-1e-4)
                     )
 
+            d_psi   = np.max(np.abs(self.psi   - psi_prev))
             # (4) LL convergence
             avg_ll = float((w * log_den.squeeze()).sum() / (w.sum() + eps))
             if abs(avg_ll - ll_prev) < self.tol:
                 break
             ll_prev = avg_ll
+            print(
+                f"[EM it={it:02d}] "
+                f"d_theta={d_theta:.2e}, "
+                f"d_psi={d_psi:.2e}, "
+                f"d_pi={d_pi:.2e}, "
+                f"avg_ll={avg_ll:.6f}"
+            )
+            # if it > 0:
+            #     d_ll = abs(avg_ll - ll_prev)
+            #     d_theta = np.max(np.abs(self.theta - theta_prev))
+            #     d_psi = np.max(np.abs(self.psi - psi_prev))
+            #     d_pi = np.max(np.abs(self.p_delta - pi_prev))
+            #     print(f"it={it} ll={avg_ll:.6f} d_ll={d_ll:.2e} "
+            #         f"d_theta={d_theta:.2e} d_psi={d_psi:.2e} d_pi={d_pi:.2e}")
+        print(f"EM fit completed in {it+1} iterations")
 
     # ---------- inference ----------
     def predict_proba(self, df: pd.DataFrame) -> np.ndarray:
@@ -411,7 +483,9 @@ class SimpleEM4EvidenceH_Refine:
                     for d in (0, 1):
                         psi_d = np.clip(self.psi[d], 1e-4, 1-1e-4)
                         lr = C_obs*np.log(psi_d) + (1-C_obs)*np.log(1-psi_d)
+                        # 只在 terminal 行上写入 agent_log
                         agent_log[term_rows, d] = self.agent_weight * lr
+                       
         # # ---- agent_testcase_score 通道（case 级）----
         # agent_log = np.zeros((N, 2))
         # if C_case is not None:

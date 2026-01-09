@@ -7,7 +7,7 @@ from pathlib import Path
 from em_evidencedh_refine import SimpleEM4EvidenceH_Refine, analyze_flips, correct_agent_judgment, confusion_matrix, correct_agent_rootcause_terminal, correct_by_em_selective, fuse_correct_rootcause
 # from em_evidence_refine_3state import SimpleEM4EvidenceH_Refine
 from gate import GateModelNB, fit_gate_nb_from_step_df, load_gate_model, build_case_features, binarize_features, infer_gate_nb_from_step_df, gate_predict_proba_nb, save_gate_model
-from evaluation_utils import calculate_and_print_accuracy
+from evaluation_utils import calculate_and_print_accuracy, calculate_case_statistics
 
 def load_data(path: str) -> pd.DataFrame:
     path = Path(path)
@@ -120,6 +120,7 @@ def main(args):
         df["delta_label"] = np.nan
     if "delta_label_updated" in df.columns:
         df["delta_label"] = df["delta_label_updated"]
+    
 
     # train_df, val_df = make_train_val_split(
     #     df,
@@ -134,15 +135,35 @@ def main(args):
 
     # 使用全部数据进行训练
     train_df = df
-
+    # 过滤掉 step 为空白的行
+    if "step" in train_df.columns:
+        train_df = train_df[train_df["step"].notna()].copy()
+        print(f"After filtering step NaN: {train_df.shape[0]} rows (from {df.shape[0]})")
+    
+    # 进行基础数据统计，统计按case_id分组的step数量，click动作次数，占比，Tell动作次数，占比
+    stats_result = calculate_case_statistics(train_df)
+    case_stats = stats_result["case_stats"]
     # ===== 训练 refine 版 EM =====
     gate, report_train = fit_gate_nb_from_step_df(train_df)
     gate_model_path = Path(args.out_dir) / "gate_model.pkl"
     save_gate_model(gate, gate_model_path)
 
+    ## fixme: 需要根据dataset_name设置max_iter和temp
+    max_iter = 50
+    temp = 0.8
+    if args.dataset_name == "webdevjudge_claude4":
+        max_iter = 50
+        temp = 0.6
+    elif args.dataset_name == "realdevbench_ui_tars":
+        max_iter = 5
+        temp = 1.1
+    elif  args.dataset_name == "webdevjudge_ui_tars":
+        max_iter = 5
+        temp = 0.8
+   
     em = SimpleEM4EvidenceH_Refine(
-        max_iter=200,
-        tol=1e-4,
+        max_iter=max_iter,
+        tol=1e-6,
         seed=42,
         w_gui=args.w_gui,
         w_code=args.w_code,
@@ -154,10 +175,12 @@ def main(args):
         b_c0=3.0,
         a_c1=3.0,
         b_c1=3.0,
-        theta_floor=0.05,
-        theta_ceil=0.95,
+        theta_floor=0.02,
+        theta_ceil=0.98,
+        # theta_floor=0.05,
+        # theta_ceil=0.95,
         pi_floor=0.02,
-        temp=0.8,
+        temp=temp,
     )
     em.fit(
         train_df,
@@ -491,7 +514,7 @@ def run_prediction(df_path: str, out_dir: str, params_path: str = None, args=Non
     # 加载数据
     df = load_data(df_path)
     # df["M_code"] = 1.0
-    print(df.shape)
+    print("check test data shape",df.shape)
     # 确保必要的列存在
     for col in ["E1_gui", "E2_code"]:
         if col not in df.columns:
@@ -560,14 +583,15 @@ def run_prediction(df_path: str, out_dir: str, params_path: str = None, args=Non
 
     E, w, M, case_ids, C_raw, _ = em._extract(df)
 
-    df_tmp["E_code"] = E[:,1]
+    df_tmp["E2_code"] = E[:,1]
     
     # 构建预测结果
     pred_step = df.copy()
     pred_step["P_EnvFail"] = post[:, 0]
     pred_step["P_AgentFail"] = post[:, 1]
-
     
+    eval_step_attribution(pred_step, df, col_case="test_case_id",  col_p="P_AgentFail", threshold=0.5)
+
     # 从 args 获取 tau 参数，如果 args 为 None 则使用默认值
     tau_agentfail = args.tau_agentfail if args is not None else 0.75
     tau_envfail = args.tau_envfail if args is not None else 0.75
@@ -583,6 +607,7 @@ def run_prediction(df_path: str, out_dir: str, params_path: str = None, args=Non
             col_agent="agent_testcase_score_x",
         )
 
+    
     # ===== Step 1: 批量算 p_err =====
     # 尝试加载gate模型
     gate_model_path = None
@@ -662,16 +687,139 @@ def has_direction_support(case_row, df):
     # 这里先返回True作为占位符
     return True
 
+import pandas as pd
+import numpy as np
+from sklearn.metrics import accuracy_score, f1_score, roc_auc_score, average_precision_score, brier_score_loss
+
+# ANSI颜色代码
+class Colors:
+    RESET = '\033[0m'
+    BOLD = '\033[1m'
+    # 前景色
+    BLACK = '\033[30m'
+    RED = '\033[31m'
+    GREEN = '\033[32m'
+    YELLOW = '\033[33m'
+    BLUE = '\033[34m'
+    MAGENTA = '\033[35m'
+    CYAN = '\033[36m'
+    WHITE = '\033[37m'
+    # 背景色
+    BG_BLACK = '\033[40m'
+    BG_RED = '\033[41m'
+    BG_GREEN = '\033[42m'
+    BG_YELLOW = '\033[43m'
+    BG_BLUE = '\033[44m'
+    BG_MAGENTA = '\033[45m'
+    BG_CYAN = '\033[46m'
+    BG_WHITE = '\033[47m'
+
+def format_metric(name: str, value, is_good_high: bool = True, threshold_good: float = 0.7, threshold_bad: float = 0.5):
+    """格式化指标输出，根据值的好坏添加颜色"""
+    if isinstance(value, float) and not np.isnan(value):
+        if is_good_high:
+            if value >= threshold_good:
+                color = Colors.GREEN
+            elif value >= threshold_bad:
+                color = Colors.YELLOW
+            else:
+                color = Colors.RED
+        else:  # 对于Brier Score等，值越小越好
+            if value <= threshold_bad:
+                color = Colors.GREEN
+            elif value <= threshold_good:
+                color = Colors.YELLOW
+            else:
+                color = Colors.RED
+        return f"{Colors.CYAN}{name}{Colors.RESET}: {color}{value:.4f}{Colors.RESET}"
+    else:
+        return f"{Colors.CYAN}{name}{Colors.RESET}: {Colors.YELLOW}N/A{Colors.RESET}"
+
+def print_eval_results(out: dict):
+    """带颜色打印评估结果"""
+    print(f"\n{Colors.BOLD}{Colors.BLUE}{'='*60}{Colors.RESET}")
+    print(f"{Colors.BOLD}{Colors.BLUE}Evaluation Results{Colors.RESET}")
+    print(f"{Colors.BOLD}{Colors.BLUE}{'='*60}{Colors.RESET}")
+    print(f"{format_metric('n_steps', out['n_steps'], is_good_high=True)}")
+    print(f"{format_metric('pos_rate', out['pos_rate'], is_good_high=True)}")
+    print(f"{format_metric('acc', out['acc'], is_good_high=True, threshold_good=0.8, threshold_bad=0.6)}")
+    print(f"{format_metric('macro_f1', out['macro_f1'], is_good_high=True, threshold_good=0.7, threshold_bad=0.5)}")
+    print(f"{format_metric('auprc', out['auprc'], is_good_high=True, threshold_good=0.6, threshold_bad=0.4)}")
+    print(f"{format_metric('auroc', out['auroc'], is_good_high=True, threshold_good=0.7, threshold_bad=0.5)}")
+    print(f"{format_metric('brier', out['brier'], is_good_high=False, threshold_good=0.3, threshold_bad=0.2)}")
+    print(f"{format_metric('mean_p', out['mean_p'], is_good_high=True)}")
+    print(f"{Colors.BOLD}{Colors.BLUE}{'='*60}{Colors.RESET}\n")
+
+def eval_step_attribution(
+    step_pred_df: pd.DataFrame,
+    label_df: pd.DataFrame,
+    col_case="test_case_id",
+    # col_step="step",
+    col_p="pred_label",
+    # col_label_step="critical_step_idx",
+    col_label="delta_label",   # "AgentFail"/"EnvFail"
+    # agent_pos="AgentFail",
+    threshold=0.5,
+):
+    # 取每个case的关键步预测
+    key = label_df[[col_case, col_label]].copy()
+    merged = key.merge(step_pred_df[[col_case,  col_p]], on=[col_case], how="inner")
+
+    if len(merged) == 0:
+        raise ValueError("No matched (case, step) rows. Check step_idx/case_id alignment.")
+    
+    print("check merged shape",merged.shape)
+    # 过滤掉delta_label为NaN的情况，只针对有标注的数据进行计算
+    merged = merged[merged[col_label].notna()].copy()
+    print("check merged shape after filtering",merged.shape)
+    
+    if len(merged) == 0:
+        raise ValueError("No labeled data found. All delta_label values are NaN.")
+    
+    # 将 delta_label 转换为二值标签：1=AgentFail, 0=EnvFail
+    # delta_label 可能是数值 (0/1) 或字符串 ("AgentFail"/"EnvFail")
+    delta_col = merged[col_label]
+    if delta_col.dtype == 'object':  # 字符串类型
+        y_true = (delta_col.str.lower().str.startswith('agent')).astype(int).values
+    else:  # 数值类型：1=AgentFail, 0=EnvFail
+        y_true = delta_col.astype(int).values
+    
+    p = merged[col_p].astype(float).values
+    
+    # 过滤掉 p 中的 NaN 值
+    valid_mask = ~np.isnan(p)
+    if not valid_mask.any():
+        raise ValueError(f"All {col_p} values are NaN after filtering.")
+    
+    y_true = y_true[valid_mask]
+    p = p[valid_mask]
+    p = p.clip(1e-6, 1-1e-6)
+    y_pred = (p >= threshold).astype(int)
+
+    
+    out = {
+        "n_steps": int(y_true.shape[0]),
+        "pos_rate": float(y_true.mean()),
+        "acc": float(accuracy_score(y_true, y_pred)),
+        "macro_f1": float(f1_score(y_true, y_pred, average="macro")),
+        "auprc": float(average_precision_score(y_true, p)),
+        "auroc": float(roc_auc_score(y_true, p)) if len(np.unique(y_true)) > 1 else np.nan,
+        "brier": float(brier_score_loss(y_true, p)),
+        "mean_p": float(p.mean()),
+    }
+    print_eval_results(out)
+    return out, merged
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument("--dataset_name", type=str, default="realdevbench_claude4")
     parser.add_argument("--data_path", type=str,
-                        # default="/data/hongsirui/opensource_em_adaptive/em_adaptive_learning/src/em_df_realdevbench_claude_4_train.xlsx")
+                        # default="/data/hongsirui/opensource_em_adaptive/em_adaptive_learning/src/em_df_realdevbench_claude_4_train_filter.xlsx")
                         default="/data/hongsirui/opensource_em_adaptive/em_adaptive_learning/src/em_df_webdevjudge_ui_tars_train.xlsx")
     parser.add_argument("--test_path", type=str,
-                        # default="/data/hongsirui/opensource_em_adaptive/em_adaptive_learning/src/em_df_realdevbench_claude_4_test.xlsx")
-                        default="/data/hongsirui/opensource_em_adaptive/em_adaptive_learning/src/em_df_webdevjudge_ui_tars_test.xlsx")
+                        default="/data/hongsirui/opensource_em_adaptive/em_adaptive_learning/src/em_df_realdevbench_claude_4_test.xlsx")
+                        # default="/data/hongsirui/opensource_em_adaptive/em_adaptive_learning/src/em_df_webdevjudge_ui_tars_test.xlsx")
     parser.add_argument("--params_path", type=str,
                         default="/data/hongsirui/opensource_em_adaptive/em_outputs_refine_realdevbench_claude_4/em_params.json")
     parser.add_argument("--out_dir", type=str,
@@ -685,9 +833,9 @@ if __name__ == "__main__":
     # EM weight parameters
     parser.add_argument("--w_gui", type=float, default=0.8,
                         help="Weight for GUI evidence channel")
-    parser.add_argument("--w_code", type=float, default=1.2,
+    parser.add_argument("--w_code", type=float, default=0.2,
                         help="Weight for code evidence channel")
-    parser.add_argument("--w_noresp", type=float, default=0.3,
+    parser.add_argument("--w_noresp", type=float, default=1.3,
                         help="Weight for no-response evidence channel")
     parser.add_argument("--agent_weight", type=float, default=0.5,
                         help="Weight for agent judgment")

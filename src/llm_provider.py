@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# @Author  : 
+# @Author  :
 # @Desc    :
 import asyncio
 from dis import Instruction
@@ -9,9 +9,10 @@ from typing import Optional, List, Dict, Any
 from openai import AsyncOpenAI, AsyncStream, APIConnectionError
 from metagpt.logs import logger
 
+
 class LLMProvider:
     """处理与LLM API通信的工具类"""
-    
+
     def __init__(self, api_key: Optional[str] = None, organization: Optional[str] = None,
                  base_url: Optional[str] = "https://openrouter.ai/api/v1"):
         """
@@ -23,21 +24,22 @@ class LLMProvider:
             base_url: API基础URL
         """
         self.api_key = api_key or os.environ.get("OPENAI_API_KEY")
-        self.organization = organization or os.environ.get("OPENAI_ORGANIZATION")
-        
+        self.organization = organization or os.environ.get(
+            "OPENAI_ORGANIZATION")
+
         if not self.api_key:
             raise ValueError("API密钥未提供，请设置OPENAI_API_KEY环境变量或在初始化时提供")
-        
+
         # 确保 base_url 以 /v1 结尾（OpenAI 兼容 API 需要）
         if base_url and not base_url.endswith('/v1') and not base_url.endswith('/v1/'):
             if base_url.endswith('/'):
                 base_url = base_url + 'v1'
             else:
                 base_url = base_url + '/v1'
-        
+
         self.base_url = base_url
         self.aclient = AsyncOpenAI(api_key=self.api_key, base_url=base_url)
-    
+
     def _cons_kwargs(self, messages: List[Dict[str, str]], timeout: int = 300, **extra_kwargs) -> Dict[str, Any]:
         """
         构建API调用参数
@@ -58,13 +60,12 @@ class LLMProvider:
             "timeout": timeout,
             "stop": ["<|end_of_text|>", "<|eot_id|>"],
         }
-        
+
         if extra_kwargs:
             kwargs.update(extra_kwargs)
         return kwargs
 
-
-    async def run(self, model, messages: List[Dict[str, str]], use_stream = True):
+    async def run(self, model, messages: List[Dict[str, str]], use_stream=True):
         kwargs = {
             "messages": messages,
             "max_tokens": 6000,
@@ -73,8 +74,7 @@ class LLMProvider:
             "timeout": 600,
             "stop": ["<|end_of_text|>", "<|eot_id|>"],
         }
-        
-        
+
         try:
             response = await self.aclient.chat.completions.create(
                 **self._cons_kwargs(
@@ -82,15 +82,15 @@ class LLMProvider:
                 ),
                 stream=True
             )
-        
+
             collected_messages = []
             async for chunk in response:
                 chunk_message = chunk.choices[0].delta.content or "" if chunk.choices else ""
                 collected_messages.append(chunk_message)
-        
+
             full_reply_content = "".join(collected_messages)
             return full_reply_content
-    
+
         except Exception as e:
             logger.error(f"文本生成失败: {str(e)}")
             raise
@@ -98,9 +98,10 @@ class LLMProvider:
     async def evaluate_image(self, image_url, query, user_prompt, **kwargs):
         user_prompt = user_prompt.format(instruction=query)
         return await self.run(image_data_url=image_url, user_prompt=user_prompt, **kwargs)
-    
+
     async def generate_reflection(self, reflection_thought, **kwargs):
-        reflection_thought = reflection_thought.replace('When using the Tell or Wait action, there is no need to do reflection.', '')
+        reflection_thought = reflection_thought.replace(
+            'When using the Tell or Wait action, there is no need to do reflection.', '')
         prompt = '''
 You are a "precise GUI test adjudicator."
 
@@ -147,16 +148,81 @@ or
         ]
         return await self.run(model=kwargs["model"], messages=messages)
 
+    async def generate_testcase_judgement(self, test_case_combined, agent_judgement, evidence, **kwargs):
+        """
+        根据测试用例要求、期望结果和Agent原始判断，决定测试用例是否通过
+
+        Args:
+            test_case_combined: 测试用例要求和期望结果
+            agent_judgement: Agent的原始判断 (0/1)
+            evidence: 观察到的证据
+            **kwargs: 其他参数，必须包含 model
+
+        Returns:
+            LLM的判断结果 (JSON格式)
+        """
+        prompt = '''
+You are a "precise test case adjudicator."
+
+Task:
+Decide if a test case passed based on the test case requirements, expected results, agent's original judgement, and observed evidence.
+
+Input:
+Test Case Requirements and Expected Results:
+{test_case_combined}
+
+Agent's Original Judgement: {agent_judgement} (1=Pass, 0=Fail)
+
+Evidence/Observation:
+{evidence}
+
+Decision rules:
+- Success (output Yes): The evidence clearly shows that the expected results were achieved as specified in the test case requirements
+- Failure (output No): Any of the following:
+  - The evidence shows the expected results were NOT achieved
+  - The evidence is ambiguous, contradictory, or inconclusive
+  - The evidence is empty or contains no meaningful information
+  - The observed behavior does not match the expected results
+
+Note: Be conservative in your judgement. If there is any doubt, output No.
+
+Output format:
+Return exactly one line of JSON with no extra keys:
+
+```json
+{{ "result" : "Yes" }}
+```
+
+or
+
+```json
+{{ "result" : "No" }}
+```
+
+'''
+        prompt = prompt.format(
+            test_case_combined=test_case_combined,
+            agent_judgement=agent_judgement,
+            evidence=evidence
+        )
+        messages = [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": prompt}
+        ]
+        return await self.run(model=kwargs["model"], messages=messages)
+
+
 if __name__ == "__main__":
     api_key = "sk-ekJiZhzXC9p1wQG7mXfydlazV7LTqiurBI5Hr5W2l5X3gWaE"
     api_key = "sk-zCoMKnMGAOqWuc55D0eB4vxIx8JQEA7xgetEqTHfXkchv9tk"
     base_url = "https://newapi.deepwisdom.ai/v1"
-    
+
     model = "anthropic/claude-sonnet-4.5"
     model = "claude-sonnet-4-20250514"
     # model = "gemini-3-pro-preview"
     llm = LLMProvider(api_key=api_key, base_url=base_url)
     reflection_thought = "Generate a web application for weather app"
     # reflection_thought = 'Comparing the before and after screenshots: 1. The operation was to click the "Reload" button at coordinates (960, 716) 2. Looking at both screenshots, they appear identical with the same elements and layout:    - Same error message "Your app is not ready yet"    - Same button and text positions    - Same URL in the address bar 3. The reload action did not produce any visible changes to the page content 4. This suggests either:    - The page is still loading (though 5 seconds wait time should be'
-    result = asyncio.run(llm.generate_reflection(reflection_thought=reflection_thought, model=model))
+    result = asyncio.run(llm.generate_reflection(
+        reflection_thought=reflection_thought, model=model))
     print(result)

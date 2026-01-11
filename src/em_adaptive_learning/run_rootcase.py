@@ -1,3 +1,4 @@
+from sklearn.metrics import accuracy_score, f1_score, roc_auc_score, average_precision_score, brier_score_loss
 import argparse
 import pandas as pd
 import numpy as np
@@ -8,6 +9,7 @@ from em_evidencedh_refine import SimpleEM4EvidenceH_Refine, analyze_flips, corre
 # from em_evidence_refine_3state import SimpleEM4EvidenceH_Refine
 from gate import GateModelNB, fit_gate_nb_from_step_df, load_gate_model, build_case_features, binarize_features, infer_gate_nb_from_step_df, gate_predict_proba_nb, save_gate_model
 from evaluation_utils import calculate_and_print_accuracy, calculate_case_statistics
+
 
 def load_data(path: str) -> pd.DataFrame:
     path = Path(path)
@@ -120,7 +122,12 @@ def main(args):
         df["delta_label"] = np.nan
     if "delta_label_updated" in df.columns:
         df["delta_label"] = df["delta_label_updated"]
-    
+
+    # 如果启用 disable_noresp 模式，彻底关闭 noresp 通道
+    if args.disable_noresp:
+        df["M_noresp"] = 1.0  # mask 掉 noresp 通道
+        args.w_noresp = 0.0   # 权重设为 0
+        print("[Mode] disable_noresp enabled: noresp channel is completely disabled")
 
     # train_df, val_df = make_train_val_split(
     #     df,
@@ -138,8 +145,9 @@ def main(args):
     # 过滤掉 step 为空白的行
     if "step" in train_df.columns:
         train_df = train_df[train_df["step"].notna()].copy()
-        print(f"After filtering step NaN: {train_df.shape[0]} rows (from {df.shape[0]})")
-    
+        print(
+            f"After filtering step NaN: {train_df.shape[0]} rows (from {df.shape[0]})")
+
     # 进行基础数据统计，统计按case_id分组的step数量，click动作次数，占比，Tell动作次数，占比
     stats_result = calculate_case_statistics(train_df)
     case_stats = stats_result["case_stats"]
@@ -148,7 +156,7 @@ def main(args):
     gate_model_path = Path(args.out_dir) / "gate_model.pkl"
     save_gate_model(gate, gate_model_path)
 
-    ## fixme: 需要根据dataset_name设置max_iter和temp
+    # fixme: 需要根据dataset_name设置max_iter和temp
     max_iter = 50
     temp = 0.8
     if args.dataset_name == "webdevjudge_claude4":
@@ -157,10 +165,10 @@ def main(args):
     elif args.dataset_name == "realdevbench_ui_tars":
         max_iter = 5
         temp = 1.1
-    elif  args.dataset_name == "webdevjudge_ui_tars":
+    elif args.dataset_name == "webdevjudge_ui_tars":
         max_iter = 5
         temp = 0.8
-   
+
     em = SimpleEM4EvidenceH_Refine(
         max_iter=max_iter,
         tol=1e-6,
@@ -379,17 +387,17 @@ def correct_cases_with_post(em, df, case_col="test_case_id", margin=0.0, out_dir
 def build_case_df_with_risk(df: pd.DataFrame, gate_model_path: Path) -> pd.DataFrame:
     """
     使用gate模型构建case-level数据框并计算风险等级
-    
+
     Args:
         df: step-level数据框
         gate_model_path: gate模型文件路径
-    
+
     Returns:
         case_df_test: 包含test_case_id, p_err, gt, agent_pred, risk的case-level数据框
     """
     print(f"Loading gate model from: {gate_model_path}")
     gate_nb = load_gate_model(gate_model_path)
-    
+
     # 构建case-level特征
     X_case_test = build_case_features(
         df,
@@ -399,30 +407,32 @@ def build_case_df_with_risk(df: pd.DataFrame, gate_model_path: Path) -> pd.DataF
         col_agent_pred="agent_testcase_score_x",
         col_gt="phi" if "phi" in df.columns else None,
     )[0]  # 只取X_case，不需要y_err和gt
-    
+
     X_case_test_bin = binarize_features(X_case_test)
-    
+
     # 确保特征顺序与训练时一致
     if hasattr(gate_nb, 'feature_names'):
-        missing_features = set(gate_nb.feature_names) - set(X_case_test_bin.columns)
+        missing_features = set(gate_nb.feature_names) - \
+            set(X_case_test_bin.columns)
         if missing_features:
             # 添加缺失的特征（填充0）
             for feat in missing_features:
                 X_case_test_bin[feat] = 0
         X_case_test_bin = X_case_test_bin[gate_nb.feature_names]
-    
+
     # 预测p_err
     p_err = gate_predict_proba_nb(gate_nb, X_case_test_bin).values
-    
+
     # 创建case-level数据框
     case_df_test = pd.DataFrame({
         "test_case_id": X_case_test.index,
         "p_err": p_err,
         "gt": X_case_test["phi"],
-        "agent_pred": X_case_test["agent_pred"] if "agent_pred" in X_case_test.columns else 
-                     df.groupby("test_case_id")["agent_testcase_score_x"].first().reindex(X_case_test.index).fillna(0).astype(int)
+        "agent_pred": X_case_test["agent_pred"] if "agent_pred" in X_case_test.columns else
+        df.groupby("test_case_id")["agent_testcase_score_x"].first().reindex(
+            X_case_test.index).fillna(0).astype(int)
     })
-    
+
     # ===== Step 2: 分层 =====
     case_df_test["risk"] = pd.cut(
         case_df_test["p_err"],
@@ -430,21 +440,21 @@ def build_case_df_with_risk(df: pd.DataFrame, gate_model_path: Path) -> pd.DataF
         labels=["low", "mid", "high"],
         include_lowest=True,
     )
-    
+
     return case_df_test
 
 
 def apply_risk_based_correction(case_df_test: pd.DataFrame, em, df: pd.DataFrame) -> pd.DataFrame:
     """
     根据风险等级对case进行矫正
-    
+
     Args:
         case_df_test: case-level数据框，包含test_case_id, p_err, gt, agent_pred, risk
         em: EM模型
         df: step-level数据框
-    
+
     Returns:
-        pred_correct: 包含矫正结果的DataFrame，包含case_id, agent_original, corrected_label, 
+        pred_correct: 包含矫正结果的DataFrame，包含case_id, agent_original, corrected_label,
                      action, risk, p_err, P_case_AgentFail, P_case_EnvFail等
     """
     # ===== Step 3: 只对 mid/high 做 EM =====
@@ -463,18 +473,18 @@ def apply_risk_based_correction(case_df_test: pd.DataFrame, em, df: pd.DataFrame
                 "gt": case.gt,
             })
             continue
-        
+
         p_agent = em_predict(case, em, df)
         p_env = 1 - p_agent
-        
+
         if case.risk == "mid":
-            if p_agent > 0.7:
+            if p_agent > 0.4:
                 final = 1 - case.agent_pred
                 decision = "FLIP"
             else:
                 final = case.agent_pred
                 decision = "KEEP"
-        
+
         elif case.risk == "high":
             if p_agent > 0.7:
                 final = 1-case.agent_pred
@@ -482,8 +492,7 @@ def apply_risk_based_correction(case_df_test: pd.DataFrame, em, df: pd.DataFrame
             else:
                 final = 1 - case.agent_pred
                 decision = "FLIP"
-               
-        
+
         rows.append({
             "case_id": case.test_case_id,
             "agent_original": case.agent_pred,
@@ -494,7 +503,7 @@ def apply_risk_based_correction(case_df_test: pd.DataFrame, em, df: pd.DataFrame
             "P_case_AgentFail": p_agent,
             "P_case_EnvFail": p_env,
         })
-    
+
     pred_correct = pd.DataFrame(rows)
     return pred_correct
 
@@ -514,7 +523,7 @@ def run_prediction(df_path: str, out_dir: str, params_path: str = None, args=Non
     # 加载数据
     df = load_data(df_path)
     # df["M_code"] = 1.0
-    print("check test data shape",df.shape)
+    print("check test data shape", df.shape)
     # 确保必要的列存在
     for col in ["E1_gui", "E2_code"]:
         if col not in df.columns:
@@ -530,6 +539,13 @@ def run_prediction(df_path: str, out_dir: str, params_path: str = None, args=Non
         raise ValueError("Missing column: test_case_id")
     if "step" not in df.columns:
         df["step"] = np.arange(len(df))
+
+    # 如果启用 disable_noresp 模式，彻底关闭 noresp 通道
+    disable_noresp = getattr(args, 'disable_noresp',
+                             False) if args is not None else False
+    if disable_noresp:
+        df["M_noresp"] = 1.0  # mask 掉 noresp 通道
+        print("[Mode] disable_noresp enabled: noresp channel is completely disabled")
 
     # 加载参数
     if params_path is None:
@@ -547,11 +563,12 @@ def run_prediction(df_path: str, out_dir: str, params_path: str = None, args=Non
     # 从 args 获取权重参数，如果 args 为 None 则使用默认值
     w_gui = args.w_gui if args is not None else 1.0
     w_code = args.w_code if args is not None else 1.2
-    w_noresp = args.w_noresp if args is not None else 0.3
+    w_noresp = 0.0 if disable_noresp else (
+        args.w_noresp if args is not None else 0.3)
     agent_weight = args.agent_weight if args is not None else 0.9
 
     # 创建 EM 模型（使用默认配置）
-    
+
     em = SimpleEM4EvidenceH_Refine(
         max_iter=200,
         tol=1e-4,
@@ -574,40 +591,37 @@ def run_prediction(df_path: str, out_dir: str, params_path: str = None, args=Non
 
     # 加载已有参数
     em.load_params(params)
-   
+
     post = em.predict_proba(df)
     df_tmp = df.copy()
     # df_tmp["P_pass"] = post[:,2]
-    df_tmp["P_fail_env"] = post[:,0]
-    df_tmp["P_fail_agent"] = post[:,1]
+    df_tmp["P_fail_env"] = post[:, 0]
+    df_tmp["P_fail_agent"] = post[:, 1]
 
     E, w, M, case_ids, C_raw, _ = em._extract(df)
 
-    df_tmp["E2_code"] = E[:,1]
-    
+    df_tmp["E_code"] = E[:, 1]
+
     # 构建预测结果
     pred_step = df.copy()
     pred_step["P_EnvFail"] = post[:, 0]
     pred_step["P_AgentFail"] = post[:, 1]
-    
-    eval_step_attribution(pred_step, df, col_case="test_case_id",  col_p="P_AgentFail", threshold=0.5)
 
     # 从 args 获取 tau 参数，如果 args 为 None 则使用默认值
     tau_agentfail = args.tau_agentfail if args is not None else 0.75
     tau_envfail = args.tau_envfail if args is not None else 0.75
-    
-    pred_correct = correct_agent_judgment(
-            df,
-            em,
-            tau_agentfail=tau_agentfail,
-            tau_envfail=tau_envfail,
-            tau_envfail_high=tau_envfail,
-            alpha=0.75,
-            col_case="test_case_id",
-            col_agent="agent_testcase_score_x",
-        )
 
-    
+    pred_correct = correct_agent_judgment(
+        df,
+        em,
+        tau_agentfail=tau_agentfail,
+        tau_envfail=tau_envfail,
+        tau_envfail_high=tau_envfail,
+        alpha=0.75,
+        col_case="test_case_id",
+        col_agent="agent_testcase_score_x",
+    )
+
     # ===== Step 1: 批量算 p_err =====
     # 尝试加载gate模型
     gate_model_path = None
@@ -619,20 +633,21 @@ def run_prediction(df_path: str, out_dir: str, params_path: str = None, args=Non
         if not gate_model_path.exists():
             # 尝试从上级目录查找
             gate_model_path = Path(out_dir).parent / "gate_model.pkl"
-    
+
     if gate_model_path.exists():
         # 使用独立函数构建case-level数据框并计算风险等级
         case_df_test = build_case_df_with_risk(df, gate_model_path)
-        
+
         # 使用独立函数根据风险等级进行矫正
         pred_correct = apply_risk_based_correction(case_df_test, em, df)
-        
+
         # 计算并打印准确率
-        calculate_and_print_accuracy(pred_correct, df, gt_col="phi", case_col="test_case_id", prefix="Gate-based correction")
+        calculate_and_print_accuracy(
+            pred_correct, df, gt_col="phi", case_col="test_case_id", prefix="Gate-based correction")
     else:
-        print(f"Gate model not found at {gate_model_path}, using default correct_agent_judgment")
-        
-        
+        print(
+            f"Gate model not found at {gate_model_path}, using default correct_agent_judgment")
+
     # 保存结果
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -651,34 +666,36 @@ def run_prediction(df_path: str, out_dir: str, params_path: str = None, args=Non
 def em_predict(case_row, em, df):
     """
     对单个case使用EM模型预测AgentFail概率
-    
+
     Args:
         case_row: case的行数据（包含case_id等信息）
         em: EM模型
         df: step-level数据框
-    
+
     Returns:
         p_agent: P(AgentFail)概率
     """
-    case_id = case_row.test_case_id if hasattr(case_row, 'test_case_id') else case_row.case_id
+    case_id = case_row.test_case_id if hasattr(
+        case_row, 'test_case_id') else case_row.case_id
     case_df = df[df["test_case_id"] == case_id]
     if len(case_df) == 0:
         return 0.5  # 默认值
-    
+
     post = em.predict_proba(case_df)
     # 取最后一步的AgentFail概率
     p_agent = float(post[-1, 1]) if post.shape[1] >= 2 else 0.5
     return p_agent
 
+
 def has_direction_support(case_row, df):
     """
     判断case是否有方向性支持（可以根据需要实现具体逻辑）
     这里先返回一个简单的实现
-    
+
     Args:
         case_row: case的行数据
         df: step-level数据框
-    
+
     Returns:
         bool: 是否有方向性支持
     """
@@ -687,11 +704,10 @@ def has_direction_support(case_row, df):
     # 这里先返回True作为占位符
     return True
 
-import pandas as pd
-import numpy as np
-from sklearn.metrics import accuracy_score, f1_score, roc_auc_score, average_precision_score, brier_score_loss
 
 # ANSI颜色代码
+
+
 class Colors:
     RESET = '\033[0m'
     BOLD = '\033[1m'
@@ -714,6 +730,7 @@ class Colors:
     BG_CYAN = '\033[46m'
     BG_WHITE = '\033[47m'
 
+
 def format_metric(name: str, value, is_good_high: bool = True, threshold_good: float = 0.7, threshold_bad: float = 0.5):
     """格式化指标输出，根据值的好坏添加颜色"""
     if isinstance(value, float) and not np.isnan(value):
@@ -735,6 +752,7 @@ def format_metric(name: str, value, is_good_high: bool = True, threshold_good: f
     else:
         return f"{Colors.CYAN}{name}{Colors.RESET}: {Colors.YELLOW}N/A{Colors.RESET}"
 
+
 def print_eval_results(out: dict):
     """带颜色打印评估结果"""
     print(f"\n{Colors.BOLD}{Colors.BLUE}{'='*60}{Colors.RESET}")
@@ -742,13 +760,19 @@ def print_eval_results(out: dict):
     print(f"{Colors.BOLD}{Colors.BLUE}{'='*60}{Colors.RESET}")
     print(f"{format_metric('n_steps', out['n_steps'], is_good_high=True)}")
     print(f"{format_metric('pos_rate', out['pos_rate'], is_good_high=True)}")
-    print(f"{format_metric('acc', out['acc'], is_good_high=True, threshold_good=0.8, threshold_bad=0.6)}")
-    print(f"{format_metric('macro_f1', out['macro_f1'], is_good_high=True, threshold_good=0.7, threshold_bad=0.5)}")
-    print(f"{format_metric('auprc', out['auprc'], is_good_high=True, threshold_good=0.6, threshold_bad=0.4)}")
-    print(f"{format_metric('auroc', out['auroc'], is_good_high=True, threshold_good=0.7, threshold_bad=0.5)}")
-    print(f"{format_metric('brier', out['brier'], is_good_high=False, threshold_good=0.3, threshold_bad=0.2)}")
+    print(
+        f"{format_metric('acc', out['acc'], is_good_high=True, threshold_good=0.8, threshold_bad=0.6)}")
+    print(
+        f"{format_metric('macro_f1', out['macro_f1'], is_good_high=True, threshold_good=0.7, threshold_bad=0.5)}")
+    print(
+        f"{format_metric('auprc', out['auprc'], is_good_high=True, threshold_good=0.6, threshold_bad=0.4)}")
+    print(
+        f"{format_metric('auroc', out['auroc'], is_good_high=True, threshold_good=0.7, threshold_bad=0.5)}")
+    print(
+        f"{format_metric('brier', out['brier'], is_good_high=False, threshold_good=0.3, threshold_bad=0.2)}")
     print(f"{format_metric('mean_p', out['mean_p'], is_good_high=True)}")
     print(f"{Colors.BOLD}{Colors.BLUE}{'='*60}{Colors.RESET}\n")
+
 
 def eval_step_attribution(
     step_pred_df: pd.DataFrame,
@@ -763,40 +787,43 @@ def eval_step_attribution(
 ):
     # 取每个case的关键步预测
     key = label_df[[col_case, col_label]].copy()
-    merged = key.merge(step_pred_df[[col_case,  col_p]], on=[col_case], how="inner")
+    merged = key.merge(step_pred_df[[col_case,  col_p]], on=[
+                       col_case], how="inner")
 
     if len(merged) == 0:
-        raise ValueError("No matched (case, step) rows. Check step_idx/case_id alignment.")
-    
-    print("check merged shape",merged.shape)
+        raise ValueError(
+            "No matched (case, step) rows. Check step_idx/case_id alignment.")
+
+    print("check merged shape", merged.shape)
     # 过滤掉delta_label为NaN的情况，只针对有标注的数据进行计算
     merged = merged[merged[col_label].notna()].copy()
-    print("check merged shape after filtering",merged.shape)
-    
+    print("check merged shape after filtering", merged.shape)
+
     if len(merged) == 0:
-        raise ValueError("No labeled data found. All delta_label values are NaN.")
-    
+        raise ValueError(
+            "No labeled data found. All delta_label values are NaN.")
+
     # 将 delta_label 转换为二值标签：1=AgentFail, 0=EnvFail
     # delta_label 可能是数值 (0/1) 或字符串 ("AgentFail"/"EnvFail")
     delta_col = merged[col_label]
     if delta_col.dtype == 'object':  # 字符串类型
-        y_true = (delta_col.str.lower().str.startswith('agent')).astype(int).values
+        y_true = (delta_col.str.lower().str.startswith(
+            'agent')).astype(int).values
     else:  # 数值类型：1=AgentFail, 0=EnvFail
         y_true = delta_col.astype(int).values
-    
+
     p = merged[col_p].astype(float).values
-    
+
     # 过滤掉 p 中的 NaN 值
     valid_mask = ~np.isnan(p)
     if not valid_mask.any():
         raise ValueError(f"All {col_p} values are NaN after filtering.")
-    
+
     y_true = y_true[valid_mask]
     p = p[valid_mask]
     p = p.clip(1e-6, 1-1e-6)
     y_pred = (p >= threshold).astype(int)
 
-    
     out = {
         "n_steps": int(y_true.shape[0]),
         "pos_rate": float(y_true.mean()),
@@ -813,19 +840,20 @@ def eval_step_attribution(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset_name", type=str, default="realdevbench_claude4")
+    parser.add_argument("--dataset_name", type=str,
+                        default="realdevbench_claude4")
     parser.add_argument("--data_path", type=str,
                         # default="/data/hongsirui/opensource_em_adaptive/em_adaptive_learning/src/em_df_realdevbench_claude_4_train_filter.xlsx")
                         default="/data/hongsirui/opensource_em_adaptive/em_adaptive_learning/src/em_df_webdevjudge_ui_tars_train.xlsx")
     parser.add_argument("--test_path", type=str,
                         default="/data/hongsirui/opensource_em_adaptive/em_adaptive_learning/src/em_df_realdevbench_claude_4_test.xlsx")
-                        # default="/data/hongsirui/opensource_em_adaptive/em_adaptive_learning/src/em_df_webdevjudge_ui_tars_test.xlsx")
+    # default="/data/hongsirui/opensource_em_adaptive/em_adaptive_learning/src/em_df_webdevjudge_ui_tars_test.xlsx")
     parser.add_argument("--params_path", type=str,
                         default="/data/hongsirui/opensource_em_adaptive/em_outputs_refine_realdevbench_claude_4/em_params.json")
     parser.add_argument("--out_dir", type=str,
                         default="/data/hongsirui/opensource_em_adaptive/em_outputs_refine_realdevbench_claude_4")
 
-    parser.add_argument("--val_ratio", type=float, default=0.4)
+    parser.add_argument("--val_ratio", type=float, default=0.2)
     parser.add_argument("--seed", type=int, default=127)
     parser.add_argument("--tau_agentfail", type=float, default=1)
     parser.add_argument("--tau_envfail", type=float, default=0.65)
@@ -839,6 +867,8 @@ if __name__ == "__main__":
                         help="Weight for no-response evidence channel")
     parser.add_argument("--agent_weight", type=float, default=0.5,
                         help="Weight for agent judgment")
+    parser.add_argument("--disable_noresp", action="store_true", default=False,
+                        help="Disable no-response evidence channel")
 
     # parser.add_argument("--val_ratio", type=float, default=0.4)
     # parser.add_argument("--seed", type=int, default=127)

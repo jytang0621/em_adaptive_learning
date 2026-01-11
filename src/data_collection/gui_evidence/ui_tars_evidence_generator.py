@@ -72,7 +72,7 @@ class RawDataProcessor:
         use_ocr: bool = True,
         use_icon_detect: bool = True,
         quad_split_ocr: bool = False,
-        location_info: str = "center"
+        location_info: str = "bbox"
     ):
         """
         初始化处理器
@@ -112,16 +112,25 @@ class RawDataProcessor:
             self.logger.addHandler(handler)
 
     def find_all_tasks(self) -> List[Path]:
-        """查找所有 task 目录"""
+        """查找所有 task 目录
+
+        兼容两种目录结构：
+        1. web_*/task_* 格式 (如 web_1/task_1)
+        2. 项目名称/task_* 格式 (如 "90s Retro Business Card/task_001")
+        """
         tasks = []
 
-        # 遍历所有 web_* 目录
-        for web_dir in sorted(self.data_dir.glob("web_*")):
-            if not web_dir.is_dir():
+        # 遍历数据目录下的所有子目录
+        for project_dir in sorted(self.data_dir.iterdir()):
+            if not project_dir.is_dir():
+                continue
+
+            # 跳过隐藏目录和输出目录
+            if project_dir.name.startswith('.') or project_dir.name == 'evidence_output':
                 continue
 
             # 遍历所有 task_* 目录
-            for task_dir in sorted(web_dir.glob("task_*")):
+            for task_dir in sorted(project_dir.glob("task_*")):
                 if not task_dir.is_dir():
                     continue
 
@@ -407,6 +416,21 @@ class RawDataProcessor:
                 )
                 coordinate_cases += 1
 
+            # 计算准确性：检查点击坐标是否在任何元素的 bbox 范围内
+            # 使用和 gui_evidence_generator.py 一样的逻辑
+            accuracy = None
+            matched_element_id = None
+            if element_distance_sorting and click_coords:
+                # 检查是否有任何元素包含点击点
+                for elem in element_distance_sorting:
+                    if elem.get('is_inside', False):
+                        accuracy = 1
+                        matched_element_id = elem['id']
+                        break
+                if accuracy is None:
+                    # 没有元素包含点击点，标记为不准确
+                    accuracy = 0
+
             # 处理 action_content，最后一步需要转换为 Tell 格式
             final_action_content = action if action else None
             if step_idx == num_steps - 1:
@@ -425,11 +449,11 @@ class RawDataProcessor:
                 "action_target": action_target,
                 "action_content": final_action_content,
                 "reflection_thought": thought if thought else None,
-                "coordinate_match": 1 if click_coords and element_distance_sorting else None,
+                "coordinate_match": accuracy if click_coords and element_distance_sorting else None,
                 "coordinate_analysis": {
-                    "accuracy": 1,
+                    "accuracy": accuracy,
                     "method": "element_tree",
-                    "matched_element_id": element_distance_sorting[0]["id"] if element_distance_sorting else None
+                    "matched_element_id": matched_element_id
                 } if click_coords and element_distance_sorting else None,
                 "element_distance_sorting": element_distance_sorting,
                 "final_result": final_result if step_idx == num_steps - 1 else None
@@ -681,7 +705,7 @@ def main():
     parser.add_argument(
         '--data-dir',
         type=str,
-        default='/data/WebDevJudgeUnit_test',
+        default='/data/Real_UI_TARS_test',
         help='数据根目录'
     )
     parser.add_argument(
@@ -715,8 +739,8 @@ def main():
         '--location',
         type=str,
         choices=['center', 'bbox'],
-        default='center',
-        help='坐标格式'
+        default='bbox',
+        help='坐标格式 (使用 bbox 以支持准确性判断)'
     )
     parser.add_argument(
         '--verbose',

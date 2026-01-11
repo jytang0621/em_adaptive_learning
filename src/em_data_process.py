@@ -45,6 +45,40 @@ async def get_reflection_thought(observation):
         return "No"
 
 
+async def get_testcase_judgement(test_case_combined, agent_judgement, observation):
+    """
+    根据测试用例要求、期望结果、Agent原始判断和观察证据，判断测试用例是否通过
+
+    Args:
+        test_case_combined: 测试用例要求和期望结果
+        agent_judgement: Agent的原始判断 (0/1)
+        observation: 观察到的证据
+
+    Returns:
+        str: "Yes" 或 "No"
+    """
+    result = await provider.generate_testcase_judgement(
+        test_case_combined=test_case_combined,
+        agent_judgement=agent_judgement,
+        evidence=observation,
+        model=model
+    )
+    # 去除 markdown 代码块标记
+    result = result.strip()
+    if result.startswith('```json'):
+        result = result[7:]  # 去除 ```json
+    elif result.startswith('```'):
+        result = result[3:]  # 去除 ```
+    if result.endswith('```'):
+        result = result[:-3]  # 去除结尾的 ```
+    result = result.strip()
+    logger.info(f"testcase_judgement result: {result}")
+    try:
+        return json.loads(result)['result']
+    except:
+        return "No"
+
+
 def extract_evidence_from_tell(action_content):
     """
     从 Tell ({"0": {"result": "Pass", "evidence": "..."}}) 格式中定位并提取 evidence
@@ -77,11 +111,15 @@ async def filter_judge_evidence(merged_df, max_concurrent=10):
 
     async def process_row(index, row, pbar):
         observation = row['evidence']
+        test_case_combined = row.get('test_case_combined_x', '')
+        agent_judgement = row.get('agent_judge_x', 0)
 
         if observation is not None:
             async with semaphore:
                 try:
-                    result = await get_reflection_thought(observation)
+                    result = await get_testcase_judgement(
+                        test_case_combined, agent_judgement, observation
+                    )
                     logger.info(
                         f"result: {result} for observation: {observation}")
                     filter_df.at[index, 'agent_noresp'] = result
@@ -160,7 +198,45 @@ def load_gt_data(gt_file_path):
     return gt_dict, match_key, gt_value_key
 
 
-def convert_to_train_data(merged_df, label_col="gt_x", gt_file_path=None):
+def _convert_label_to_int(value):
+    """
+    将标签值转换为整数 (0 或 1)
+
+    处理以下情况:
+    - True / "true" / "True" / 1 / "1" → 1
+    - False / "false" / "False" / 0 / "0" → 0
+    - "uncertain" / None / NaN / 其他 → None (将被过滤掉)
+    """
+    if pd.isna(value):
+        return None
+
+    if isinstance(value, bool):
+        return 1 if value else 0
+
+    if isinstance(value, (int, float)):
+        return int(value) if value in [0, 1, 0.0, 1.0] else None
+
+    if isinstance(value, str):
+        value_lower = value.lower().strip()
+        if value_lower in ['true', '1', 'pass', 'yes']:
+            return 1
+        elif value_lower in ['false', '0', 'fail', 'no']:
+            return 0
+        else:
+            # "uncertain" 或其他未知值
+            return None
+
+    return None
+
+
+def convert_to_train_data(
+    merged_df,
+    label_col="gt_x",
+    gt_file_path=None,
+    delta_mode: str = "default",
+    delta_ratio: float = 0.5,
+    seed: int = 42
+):
     """
     将合并后的 DataFrame 转换为训练数据格式
 
@@ -168,13 +244,39 @@ def convert_to_train_data(merged_df, label_col="gt_x", gt_file_path=None):
         merged_df: 合并后的 DataFrame
         label_col: 标签列名
         gt_file_path: GT 文件路径，用于计算 delta_label
+        delta_mode: 标注模式，三选一:
+            - "default": 现有逻辑（gt=1且agent=0→1，gt=0且agent=1→0）
+            - "extend_negative": 在 default 基础上，按 delta_ratio 比例对 gt=0且agent=0 标注为 0
+            - "reduce_positive": 按 delta_ratio 比例保留 delta_label=1，其余置为 np.nan
+        delta_ratio: 比例参数（仅 extend_negative 和 reduce_positive 模式生效）
+            - extend_negative: 对 gt=0且agent=0 的行，按此比例标注为 0
+            - reduce_positive: 保留 delta_label=1 的比例
+        seed: 随机种子
     """
+    # 验证 delta_mode
+    valid_modes = {"default", "extend_negative", "reduce_positive"}
+    if delta_mode not in valid_modes:
+        raise ValueError(
+            f"delta_mode must be one of {valid_modes}, got '{delta_mode}'")
+
+    # 初始化随机数生成器
+    rng = np.random.default_rng(seed)
+
     # 加载 GT 数据
     gt_dict, match_key, gt_value_key = load_gt_data(gt_file_path)
 
     rows_out = []
+    skipped_count = 0
     # 1 是mask，0是不mask
     for index, row in merged_df.iterrows():
+        # 将 label 转换为 0/1 整数
+        phi_value = _convert_label_to_int(row[label_col])
+        if phi_value is None:
+            skipped_count += 1
+            logger.warning(
+                f"Skipping row {index}: invalid label value '{row[label_col]}'")
+            continue
+
         weight = 1.0
         if row['gui_evidence_x'] == -1:
             M_gui = 1
@@ -216,22 +318,25 @@ def convert_to_train_data(merged_df, label_col="gt_x", gt_file_path=None):
 
             gt_value = gt_dict.get(lookup_key)
             if gt_value is not None and not pd.isna(agent_testcase_score_val):
-                # 标注逻辑：
+                # 基础标注逻辑（default 和 extend_negative 模式共用）：
                 # - gt=1 且 agent_score=0 → delta_label=1
                 # - gt=0 且 agent_score=1 → delta_label=0
-                # - 其他情况不标注（保持 np.nan）
-                logger.info(
-                    f"gt_value: {gt_value}, agent_score: {agent_testcase_score_val}")
                 if gt_value == 1 and agent_testcase_score_val == 0:
                     delta_label = 1
                 elif gt_value == 0 and agent_testcase_score_val == 1:
                     delta_label = 0
+                # extend_negative 模式：额外标注 gt=0 且 agent=0 的情况
+                elif delta_mode == "extend_negative":
+                    if gt_value == 0 and agent_testcase_score_val == 0:
+                        # 按 delta_ratio 概率标注为 0
+                        if rng.random() < delta_ratio:
+                            delta_label = 0
                 # 其他情况 delta_label 保持默认值 np.nan
 
         rows_out.append({
             "test_case_id": row['test_case_id_x'],
             "step": row['action_id'],
-            "phi": row[label_col],
+            "phi": phi_value,
             "operation_desc": row['operation_desc_x'],
             "action_content": row['action_content_x'],
             "E1_gui": gui_evidence,  # 该步 GUI 点击是否符合预期（1=好，0=坏）。
@@ -249,7 +354,45 @@ def convert_to_train_data(merged_df, label_col="gt_x", gt_file_path=None):
             "delta_label": delta_label  # 新增：GT 与 agent_judge 的差异标签
         })
 
-    return pd.DataFrame(rows_out)
+    if skipped_count > 0:
+        logger.warning(
+            f"Skipped {skipped_count} rows due to invalid label values (e.g., 'uncertain')")
+
+    result_df = pd.DataFrame(rows_out)
+
+    # reduce_positive 模式：按 delta_ratio 比例保留 delta_label=1，其余置为 np.nan
+    if delta_mode == "reduce_positive":
+        # 找出所有 delta_label=1 的行索引
+        positive_mask = result_df["delta_label"] == 1
+        positive_indices = result_df[positive_mask].index.tolist()
+
+        if len(positive_indices) > 0:
+            # 计算需要保留的数量
+            n_keep = int(len(positive_indices) * delta_ratio)
+            # 随机选择要保留的索引
+            keep_indices = set(rng.choice(
+                positive_indices, size=n_keep, replace=False))
+            # 将未被选中的 delta_label=1 置为 np.nan
+            for idx in positive_indices:
+                if idx not in keep_indices:
+                    result_df.at[idx, "delta_label"] = np.nan
+
+            logger.info(
+                f"reduce_positive mode: kept {n_keep}/{len(positive_indices)} "
+                f"delta_label=1 rows (ratio={delta_ratio})"
+            )
+
+    # 输出模式统计信息
+    if delta_mode != "default":
+        n_label_0 = (result_df["delta_label"] == 0).sum()
+        n_label_1 = (result_df["delta_label"] == 1).sum()
+        n_nan = result_df["delta_label"].isna().sum()
+        logger.info(
+            f"delta_mode='{delta_mode}', delta_ratio={delta_ratio}: "
+            f"delta_label=0: {n_label_0}, delta_label=1: {n_label_1}, nan: {n_nan}"
+        )
+
+    return result_df
 
 
 if __name__ == "__main__":

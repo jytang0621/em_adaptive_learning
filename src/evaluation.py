@@ -52,11 +52,37 @@ def get_gui_evidence(traj):
     return gui_evidence
 
 
-def load_gui_evidence(path: Path) -> pd.DataFrame:
-    """统一的函数，用于加载 GUI evidence 数据，自动检测数据格式"""
+def _normalize_test_case_id(project_name: str) -> str:
+    """
+    将 project_name 规范化为 test_case_id 格式（仅用于 realdevbench）
+    例如: '90s Retro Business Card_case001_0_155937' -> '90s Retro Business Card_case001'
+    去掉末尾的 _version_timestamp 后缀
+    """
+    import re
+    # 匹配末尾的 _数字_数字 模式（如 _0_155937）
+    return re.sub(r'_\d+_\d+$', '', project_name)
+
+
+def load_gui_evidence(path: Path, tag: str = "webdevjudge") -> pd.DataFrame:
+    """
+    统一的函数，用于加载 GUI evidence 数据，自动检测数据格式
+
+    Args:
+        path: GUI evidence 文件路径
+        tag: 数据源标识，"webdevjudge" 或 "realdevbench"
+             - webdevjudge: project_name 格式为 'web_0_4'，直接使用作为 test_case_id
+             - realdevbench: project_name 格式为 'xxx_case001_0_155937'，需要去掉末尾后缀
+    """
     gui_evidence = []
     for row in load_jsonl(path):
         project_name = row["project_name"]
+        # 根据 tag 决定是否需要规范化 test_case_id
+        if tag == "realdevbench":
+            # realdevbench 格式需要去掉末尾的 _version_timestamp 后缀
+            test_case_id = _normalize_test_case_id(project_name)
+        else:
+            # webdevjudge 格式直接使用 project_name 作为 test_case_id
+            test_case_id = project_name
         # 检测数据格式：如果包含 'results' 字段，说明是列表格式
         actions = row["results"] if "results" in row else [row]
         gui_evidence_list = get_gui_evidence(actions)
@@ -64,7 +90,7 @@ def load_gui_evidence(path: Path) -> pd.DataFrame:
         for i, action in enumerate(actions):
             iter_num = i + 1 if "results" in row else row["iter_num"]
             gui_evidence.append({
-                "test_case_id": project_name,
+                "test_case_id": test_case_id,
                 "action_id": f"{project_name}_iter_{iter_num}",
                 "operation_desc": action["operation_desc"],
                 "reflection_thought": action["reflection_thought"],
@@ -211,9 +237,11 @@ if __name__ == "__main__":
     load_code_evidence(WEBDEVJUDGE_CODE_EVIDENCE_JSONL, tag="webdevjudge")
 
     # 测试加载GUI证据
-    gui_evidence = load_gui_evidence(WEBDEVJUDGE_GUI_EVIDENCE_JSONL)
+    gui_evidence = load_gui_evidence(
+        WEBDEVJUDGE_GUI_EVIDENCE_JSONL, tag="webdevjudge")
     print(gui_evidence.head(3))
-    gui_evidence = load_gui_evidence(REALDEVBENCH_GUI_EVIDENCE_JSONL)
+    gui_evidence = load_gui_evidence(
+        REALDEVBENCH_GUI_EVIDENCE_JSONL, tag="realdevbench")
     print(gui_evidence.head(3))
 
     # 测试评估
